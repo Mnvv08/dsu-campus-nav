@@ -212,3 +212,13 @@ button:focus-visible, .row:focus-visible { outline: 2px solid var(--live); outli
 .route { width: 100%; margin-top: 15px; padding: 10px; border-radius: 7px; }
 .routeinfo { margin: 11px 0 0; color: var(--live); font-size: 13px; line-height: 1.5; }
 .hintline { margin: 13px 0 0; color: var(--muted); font-size: 13px; }
+
+.fix {
+  display: inline-block;
+  margin-top: 14px;
+  color: var(--muted);
+  font-size: 13px;
+  text-decoration: none;
+  border-bottom: 1px solid var(--line);
+}
+.fix:hover { color: var(--text); border-color: var(--live); }

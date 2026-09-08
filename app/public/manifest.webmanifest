@@ -1,0 +1,14 @@
+{
+  "name": "DSU Campus Navigator",
+  "short_name": "DSU Nav",
+  "description": "Find your way around the Dayananda Sagar University campus at Harohalli.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#101413",
+  "theme_color": "#101413",
+  "orientation": "portrait",
+  "icons": [
+    { "src": "./icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ]
+}

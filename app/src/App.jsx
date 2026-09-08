@@ -7,6 +7,23 @@ import { searchPlaces } from './lib/search';
 import { buildGraph, route } from './lib/route';
 import { CATEGORIES, colorFor, labelFor, distance, walkTime, formatDistance } from './lib/categories';
 
+const REPO = 'https://github.com/Mnvv08/dsu-campus-nav';
+
+// Corrections go to GitHub Issues. No backend, no moderation queue, and
+// every report is public and attributable — which is what keeps a
+// crowdsourced dataset honest.
+function reportUrl(place) {
+  const body = [
+    `**Place:** ${place.name}`,
+    `**Currently marked:** ${place.lat}, ${place.lng}`,
+    '',
+    'What is wrong? (pin in the wrong spot, wrong name, closed, missing detail)',
+    '',
+    ''
+  ].join('\n');
+  return `${REPO}/issues/new?title=${encodeURIComponent('Correction: ' + place.name)}&body=${encodeURIComponent(body)}`;
+}
+
 export default function App() {
   const [query, setQuery] = useState('');
   const [selected, setSelected] = useState(null);
@@ -15,6 +32,7 @@ export default function App() {
   const [accuracy, setAccuracy] = useState(null);
   const [locating, setLocating] = useState(false);
   const [locError, setLocError] = useState(null);
+  const [tiles, setTiles] = useState(null);
 
   const places = campus.places ?? [];
 
@@ -51,6 +69,18 @@ export default function App() {
   }, [places]);
 
   const select = useCallback(p => setSelected(p), []);
+
+  // Ask the service worker how much imagery is stored offline.
+  useEffect(() => {
+    const sw = navigator.serviceWorker;
+    if (!sw) return;
+    const onMsg = e => {
+      if (typeof e.data?.tiles === 'number') setTiles(e.data.tiles);
+    };
+    sw.addEventListener('message', onMsg);
+    sw.ready.then(reg => reg.active?.postMessage('tile-count')).catch(() => {});
+    return () => sw.removeEventListener('message', onMsg);
+  }, []);
 
   // Watch position rather than fetching once: someone using this is walking.
   useEffect(() => {
@@ -125,6 +155,12 @@ export default function App() {
             {locating ? 'Stop tracking' : 'Show where I am'}
           </button>
           {locError && <p className="error">{locError}</p>}
+          {tiles > 0 && (
+            <p className="note">
+              {tiles} map tiles saved on this device. The area you have already
+              viewed will load without signal.
+            </p>
+          )}
           {offCampus && (
             <p className="note">
               You are outside the campus right now. Distances below are measured
@@ -267,6 +303,10 @@ export default function App() {
               does not look right.
             </p>
           )}
+
+          <a className="fix" href={reportUrl(selected)} target="_blank" rel="noreferrer">
+            Something wrong here? Tell us
+          </a>
         </div>
       )}
     </div>
