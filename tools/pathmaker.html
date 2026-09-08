@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DSU Path Tracer</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<style>
+  :root{
+    --ink:#101413; --panel:#161c1a; --line:#2b3532; --field:#0d1211;
+    --text:#e6ece9; --muted:#8d9c97; --live:#4ee39a; --warn:#e8b04b;
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%;margin:0}
+  body{display:flex;background:var(--ink);color:var(--text);
+    font:15px/1.5 "Inter",system-ui,-apple-system,sans-serif}
+  #map{flex:1;height:100vh;background:#0d1211;cursor:crosshair}
+  aside{width:360px;height:100vh;display:flex;flex-direction:column;
+    background:var(--panel);border-left:1px solid var(--line)}
+  header{padding:20px 22px 16px;border-bottom:1px solid var(--line)}
+  h1{margin:0;font-size:19px;font-weight:600;letter-spacing:-.01em}
+  header p{margin:6px 0 0;color:var(--muted);font-size:13px}
+  .stats{display:flex;border-bottom:1px solid var(--line)}
+  .stat{flex:1;padding:12px 22px}
+  .stat b{display:block;font-size:22px;font-weight:600;color:var(--live)}
+  .stat span{color:var(--muted);font-size:12px}
+  .guide{padding:16px 22px;border-bottom:1px solid var(--line);
+    color:var(--muted);font-size:13px;line-height:1.6}
+  .guide b{color:var(--text);font-weight:500}
+  .live{padding:14px 22px;border-bottom:1px solid var(--line)}
+  .live p{margin:0 0 10px;font-size:13px;color:var(--warn)}
+  .btns{display:flex;gap:8px}
+  button{font:inherit;font-size:14px;padding:9px 13px;border-radius:6px;
+    border:1px solid var(--line);background:var(--field);color:var(--text);cursor:pointer}
+  button:hover:not(:disabled){border-color:var(--live)}
+  button:disabled{opacity:.35;cursor:not-allowed}
+  button.primary{background:var(--live);color:#06170f;border-color:var(--live);font-weight:600}
+  .list{flex:1;overflow-y:auto;padding:8px 12px}
+  .empty{color:var(--muted);font-size:13px;padding:26px 12px;text-align:center;line-height:1.6}
+  .item{padding:9px 11px;border-radius:6px;display:flex;
+    justify-content:space-between;align-items:center;cursor:pointer}
+  .item:hover{background:var(--field)}
+  .item span{font-size:13px}
+  .item em{color:var(--muted);font-style:normal;font-size:12px}
+  .item button{padding:3px 8px;font-size:12px;color:var(--muted);
+    border-color:transparent;background:none}
+  .item button:hover{color:#ff8080;border-color:#ff8080}
+  footer{padding:14px 22px;border-top:1px solid var(--line);display:flex;gap:9px}
+  footer button{flex:1}
+  #file,#placefile{display:none}
+</style>
+</head>
+<body>
+<div id="map"></div>
+<aside>
+  <header>
+    <h1>DSU Path Tracer</h1>
+    <p>Trace the walkways people actually use.</p>
+  </header>
+
+  <div class="stats">
+    <div class="stat"><b id="nPaths">0</b><span>paths</span></div>
+    <div class="stat"><b id="nNodes">0</b><span>junctions</span></div>
+  </div>
+
+  <div class="guide">
+    Click along a footpath or road to lay down points. Press <b>Enter</b> to
+    finish the path, or <b>Escape</b> to discard it. Ending near an existing
+    point snaps to it, which is what turns separate paths into a connected
+    network.
+  </div>
+
+  <div class="live">
+    <p id="status">No path in progress.</p>
+    <div class="btns">
+      <button id="finish" disabled>Finish path</button>
+      <button id="undo" disabled>Undo point</button>
+    </div>
+  </div>
+
+  <div class="list" id="list"></div>
+
+  <footer>
+    <button id="loadPlaces">Load places</button>
+    <button id="import">Load paths</button>
+    <button id="export" class="primary">Export</button>
+    <input type="file" id="file" accept=".json">
+    <input type="file" id="placefile" accept=".json">
+  </footer>
+</aside>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script>
+const CAMPUS = [12.6606692, 77.4508399];
+const SNAP_M = 12; // metres within which two points are treated as one junction
+
+const map = L.map('map').setView(CAMPUS, 17);
+L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+  { maxZoom: 21, maxNativeZoom: 19, attribution: 'Imagery: Esri, Maxar' }).addTo(map);
+
+let paths = [];         // [[ [lat,lng], ... ], ...]
+let draft = [];
+let draftLine = null;
+let draftDots = [];
+const drawn = [];
+
+const $ = id => document.getElementById(id);
+
+function metres(a, b){
+  const R = 6371000, r = d => d * Math.PI / 180;
+  const dLat = r(b[0] - a[0]), dLng = r(b[1] - a[1]);
+  const s = Math.sin(dLat/2)**2 +
+    Math.cos(r(a[0])) * Math.cos(r(b[0])) * Math.sin(dLng/2)**2;
+  return 2 * R * Math.asin(Math.sqrt(s));
+}
+
+// Reuse an existing vertex when the click lands close to one, so the
+// exported network is genuinely connected rather than visually adjacent.
+function snap(ll){
+  let best = null, bestD = SNAP_M;
+  for (const p of paths) for (const v of p) {
+    const d = metres(ll, v);
+    if (d < bestD) { bestD = d; best = v; }
+  }
+  for (const v of draft) {
+    const d = metres(ll, v);
+    if (d < bestD) { bestD = d; best = v; }
+  }
+  return best ? [...best] : ll;
+}
+
+map.on('click', e => {
+  const pt = snap([e.latlng.lat, e.latlng.lng]);
+  draft.push(pt);
+  redrawDraft();
+});
+
+function redrawDraft(){
+  if (draftLine) map.removeLayer(draftLine);
+  draftDots.forEach(d => map.removeLayer(d));
+  draftDots = [];
+
+  if (draft.length) {
+    draftLine = L.polyline(draft, { color: '#e8b04b', weight: 4, opacity: .9 }).addTo(map);
+    draft.forEach(v => draftDots.push(
+      L.circleMarker(v, { radius: 4, color: '#e8b04b', fillColor:'#e8b04b', fillOpacity:1, weight:1 }).addTo(map)
+    ));
+  } else if (draftLine) {
+    map.removeLayer(draftLine);
+    draftLine = null;
+  }
+
+  const len = draft.length > 1
+    ? Math.round(draft.reduce((s, v, i) => i ? s + metres(draft[i-1], v) : 0, 0))
+    : 0;
+
+  $('status').textContent = draft.length
+    ? `${draft.length} points, about ${len} m. Enter to finish.`
+    : 'No path in progress.';
+  $('finish').disabled = draft.length < 2;
+  $('undo').disabled = draft.length === 0;
+}
+
+function finish(){
+  if (draft.length < 2) return;
+  paths.push(draft);
+  drawn.push(L.polyline(draft, { color:'#4ee39a', weight:4, opacity:.85 }).addTo(map));
+  draft = [];
+  redrawDraft();
+  render();
+}
+
+function discard(){ draft = []; redrawDraft(); }
+
+$('finish').addEventListener('click', finish);
+$('undo').addEventListener('click', () => { draft.pop(); redrawDraft(); });
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'Enter') { e.preventDefault(); finish(); }
+  if (e.key === 'Escape') discard();
+});
+
+function nodeCount(){
+  const set = new Set();
+  paths.forEach(p => p.forEach(v => set.add(v[0].toFixed(6) + ',' + v[1].toFixed(6))));
+  return set.size;
+}
+
+function render(){
+  $('nPaths').textContent = paths.length;
+  $('nNodes').textContent = nodeCount();
+  const list = $('list');
+
+  if (!paths.length){
+    list.innerHTML = '<p class="empty">No paths yet.<br>Click along a walkway to start.</p>';
+    return;
+  }
+
+  list.innerHTML = '';
+  paths.forEach((p, i) => {
+    const len = Math.round(p.reduce((s, v, j) => j ? s + metres(p[j-1], v) : 0, 0));
+    const row = document.createElement('div');
+    row.className = 'item';
+    row.innerHTML = `<span>Path ${i + 1}<em> · ${p.length} points · ${len} m</em></span>`;
+    row.addEventListener('click', () => map.fitBounds(p, { padding:[60,60] }));
+
+    const del = document.createElement('button');
+    del.textContent = 'Remove';
+    del.addEventListener('click', ev => {
+      ev.stopPropagation();
+      map.removeLayer(drawn[i]);
+      drawn.splice(i, 1);
+      paths.splice(i, 1);
+      render();
+    });
+    row.appendChild(del);
+    list.appendChild(row);
+  });
+}
+
+// Showing the mapped places while tracing makes it obvious where the
+// network still needs to reach.
+$('loadPlaces').addEventListener('click', () => $('placefile').click());
+$('placefile').addEventListener('change', e => {
+  const f = e.target.files[0];
+  if (!f) return;
+  const r = new FileReader();
+  r.onload = () => {
+    try {
+      const d = JSON.parse(r.result);
+      (d.places || []).forEach(p => {
+        L.circleMarker([p.lat, p.lng], {
+          radius: 6, color: '#6db8ff', fillColor: '#6db8ff', fillOpacity: .9, weight: 2
+        }).addTo(map).bindTooltip(p.name, { direction:'top' });
+      });
+    } catch { alert('That file could not be read as places JSON.'); }
+  };
+  r.readAsText(f);
+  e.target.value = '';
+});
+
+$('import').addEventListener('click', () => $('file').click());
+$('file').addEventListener('change', e => {
+  const f = e.target.files[0];
+  if (!f) return;
+  const r = new FileReader();
+  r.onload = () => {
+    try {
+      const d = JSON.parse(r.result);
+      drawn.forEach(l => map.removeLayer(l));
+      drawn.length = 0;
+      paths = d.paths || [];
+      paths.forEach(p => drawn.push(
+        L.polyline(p, { color:'#4ee39a', weight:4, opacity:.85 }).addTo(map)
+      ));
+      render();
+      if (paths.length) map.fitBounds(paths.flat(), { padding:[60,60] });
+    } catch { alert('That file could not be read as paths JSON.'); }
+  };
+  r.readAsText(f);
+  e.target.value = '';
+});
+
+$('export').addEventListener('click', () => {
+  if (!paths.length) return alert('Trace at least one path first.');
+  const blob = new Blob(
+    [JSON.stringify({ updated: new Date().toISOString().slice(0,10), paths }, null, 2)],
+    { type: 'application/json' }
+  );
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'paths.json';
+  a.click();
+  URL.revokeObjectURL(a.href);
+});
+
+window.addEventListener('beforeunload', e => {
+  if (paths.length || draft.length) { e.preventDefault(); e.returnValue = ''; }
+});
+
+render();
+redrawDraft();
+</script>
+</body>
+</html>

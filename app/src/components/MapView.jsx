@@ -18,12 +18,13 @@ const youIcon = L.divIcon({
   iconAnchor: [9, 9]
 });
 
-export default function MapView({ center, places, selected, onSelect, position, accuracy }) {
+export default function MapView({ center, places, selected, onSelect, position, accuracy, routeLine }) {
   const holder = useRef(null);
   const map = useRef(null);
   const markers = useRef(new Map());
   const you = useRef(null);
   const halo = useRef(null);
+  const line = useRef(null);
 
   // Set the map up once.
   useEffect(() => {
@@ -72,6 +73,23 @@ export default function MapView({ center, places, selected, onSelect, position, 
     map.current.setView([selected.lat, selected.lng], 19, { animate: true });
     markers.current.get(selected.id)?.openTooltip();
   }, [selected]);
+
+  // Draw the walking route. Two overlaid polylines: a dark casing under a
+  // bright core, so the line stays readable over satellite imagery.
+  useEffect(() => {
+    const m = map.current;
+    if (!m) return;
+
+    if (line.current) { m.removeLayer(line.current); line.current = null; }
+    if (!routeLine || routeLine.length < 2) return;
+
+    line.current = L.layerGroup([
+      L.polyline(routeLine, { color: '#06170f', weight: 9, opacity: .55 }),
+      L.polyline(routeLine, { color: '#4ee39a', weight: 4, opacity: .95 })
+    ]).addTo(m);
+
+    m.fitBounds(routeLine, { padding: [70, 70] });
+  }, [routeLine]);
 
   // Track the user.
   useEffect(() => {

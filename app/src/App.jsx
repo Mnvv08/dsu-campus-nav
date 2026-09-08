@@ -2,7 +2,9 @@ import { useState, useMemo, useCallback, useEffect } from 'react';
 import MapView from './components/MapView';
 import campus from './data/places.json';
 import tasks from './data/tasks.json';
+import pathData from './data/paths.json';
 import { searchPlaces } from './lib/search';
+import { buildGraph, route } from './lib/route';
 import { CATEGORIES, colorFor, labelFor, distance, walkTime, formatDistance } from './lib/categories';
 
 export default function App() {
@@ -15,6 +17,10 @@ export default function App() {
   const [locError, setLocError] = useState(null);
 
   const places = campus.places ?? [];
+
+  // The graph never changes at runtime, so build it once.
+  const graph = useMemo(() => buildGraph(pathData.paths ?? []), []);
+  const [routing, setRouting] = useState(false);
 
   const present = useMemo(() => {
     const seen = new Set(places.map(p => p.category));
@@ -78,6 +84,21 @@ export default function App() {
 
   const offCampus = position ? distance(position, campus.center) > 3000 : false;
 
+  const walk = useMemo(() => {
+    if (!routing || !position || !selected) return null;
+    const r = route(graph, position, selected);
+    if (r) return r;
+    // No usable network here — fall back to a straight line, but say so.
+    return {
+      coords: [[position.lat, position.lng], [selected.lat, selected.lng]],
+      metres: distance(position, selected),
+      direct: true
+    };
+  }, [routing, position, selected, graph]);
+
+  // Directions are about one destination; changing it should reset them.
+  useEffect(() => { setRouting(false); }, [selected]);
+
   return (
     <div className="shell">
       <MapView
@@ -87,6 +108,7 @@ export default function App() {
         onSelect={select}
         position={position}
         accuracy={accuracy}
+        routeLine={walk?.coords}
       />
 
       <aside className="panel">
@@ -219,6 +241,26 @@ export default function App() {
           {selected.aliases?.length > 0 && (
             <p className="aliases">Also called {selected.aliases.join(', ')}</p>
           )}
+          {position ? (
+            <button
+              className={routing ? 'ghost route' : 'primary route'}
+              onClick={() => setRouting(!routing)}
+            >
+              {routing ? 'Hide directions' : 'Walk me there'}
+            </button>
+          ) : (
+            <p className="hintline">Turn on location to get walking directions.</p>
+          )}
+
+          {walk && (
+            <p className="routeinfo">
+              {formatDistance(walk.metres)} · {walkTime(walk.metres)}
+              {walk.direct && ' · straight line only, no path mapped here yet'}
+              {!walk.direct && walk.offNetwork > 60 &&
+                ` · roughly ${walk.offNetwork} m of this is off the traced paths`}
+            </p>
+          )}
+
           {selected.confidence !== 'confirmed' && (
             <p className="warn">
               This location has not been verified yet. Ask someone nearby if it
