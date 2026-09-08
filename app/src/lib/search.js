@@ -96,13 +96,21 @@ function unitHits(qTokens, place, lang) {
 }
 
 export function searchPlaces(query, places, tasks, lang = 'en') {
-  const qTokens = tokens(query).filter(t => !STOP.has(t));
+  const all = tokens(query);
+  const trimmed = all.filter(t => !STOP.has(t));
+  // Dropping stopwords sharpens most queries, but a question can consist
+  // of nothing else ("how do I get in?"). Filtering to empty and then
+  // returning nothing is worse than searching the words as given.
+  const qTokens = trimmed.length ? trimmed : all;
   if (qTokens.length === 0) return { results: [], task: null };
 
   // Intent keywords are checked across every language, so a mixed query
   // like "canteen ಎಲ್ಲಿ" still resolves.
+  // Intent is matched on content words only. Falling back to stopwords
+  // here would let "how do I get in" latch onto an unrelated task and
+  // state its answer confidently.
   const task = tasks.find(t =>
-    qTokens.some(qt =>
+    trimmed.some(qt =>
       Object.values(t.keywords).flat().some(k => fieldHit(qt, k) >= 0.8)
     )
   ) ?? null;

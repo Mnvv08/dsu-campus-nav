@@ -62,8 +62,12 @@ export default function MapView({ center, places, selected, onSelect, position, 
       markers.current.set(p.id, mk);
     });
 
+    // fitBounds throws on an empty set, and on a single point it zooms to
+    // maximum, which loses all surrounding context.
     if (places.length > 1) {
-      m.fitBounds(places.map(p => [p.lat, p.lng]), { padding: [50, 50] });
+      m.fitBounds(places.map(p => [p.lat, p.lng]), { padding: [50, 50], maxZoom: 18 });
+    } else if (places.length === 1) {
+      m.setView([places[0].lat, places[0].lng], 18);
     }
   }, [places, onSelect]);
 
@@ -88,7 +92,7 @@ export default function MapView({ center, places, selected, onSelect, position, 
       L.polyline(routeLine, { color: '#4ee39a', weight: 4, opacity: .95 })
     ]).addTo(m);
 
-    m.fitBounds(routeLine, { padding: [70, 70] });
+    m.fitBounds(routeLine, { padding: [70, 70], maxZoom: 19 });
   }, [routeLine]);
 
   // Track the user.

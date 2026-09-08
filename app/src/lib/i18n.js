@@ -93,6 +93,34 @@ const UI = {
     kn: 'ಈ ಬ್ರೌಸರ್ ನಿಮ್ಮ ಸ್ಥಳವನ್ನು ಹಂಚಲು ಸಾಧ್ಯವಿಲ್ಲ.',
     hi: 'यह ब्राउज़र आपकी लोकेशन साझा नहीं कर सकता।'
   },
+  chatTitle: { en: 'Ask about the campus', kn: 'ಕ್ಯಾಂಪಸ್ ಬಗ್ಗೆ ಕೇಳಿ', hi: 'परिसर के बारे में पूछें' },
+  chatOpen: { en: 'Ask a question', kn: 'ಪ್ರಶ್ನೆ ಕೇಳಿ', hi: 'सवाल पूछें' },
+  chatSend: { en: 'Send', kn: 'ಕಳುಹಿಸಿ', hi: 'भेजें' },
+  chatPlaceholder: {
+    en: 'Ask in any language…',
+    kn: 'ಯಾವುದೇ ಭಾಷೆಯಲ್ಲಿ ಕೇಳಿ…',
+    hi: 'किसी भी भाषा में पूछें…'
+  },
+  chatIntro: {
+    en: 'Ask in whatever language you are comfortable with. Answers come only from what has been mapped, so anything not on the map will be said to be missing rather than guessed at.',
+    kn: 'ನಿಮಗೆ ಸುಲಭವಾದ ಭಾಷೆಯಲ್ಲಿ ಕೇಳಿ. ಉತ್ತರಗಳು ನಕ್ಷೆಯಲ್ಲಿ ದಾಖಲಾದ ಮಾಹಿತಿಯಿಂದ ಮಾತ್ರ ಬರುತ್ತವೆ; ಇಲ್ಲದಿದ್ದರೆ ಊಹಿಸದೆ ಇಲ್ಲ ಎಂದು ಹೇಳಲಾಗುತ್ತದೆ.',
+    hi: 'जिस भाषा में सहज हों उसी में पूछें। उत्तर केवल नक्शे में दर्ज जानकारी से आते हैं; जो दर्ज नहीं है उसका अनुमान नहीं लगाया जाएगा।'
+  },
+  chatUnset: {
+    en: 'The assistant is not configured yet. Set VITE_CHAT_URL and rebuild.',
+    kn: 'ಸಹಾಯಕ ಇನ್ನೂ ಸಿದ್ಧವಾಗಿಲ್ಲ. VITE_CHAT_URL ಹೊಂದಿಸಿ ಮತ್ತೆ ಬಿಲ್ಡ್ ಮಾಡಿ.',
+    hi: 'सहायक अभी सेट नहीं है। VITE_CHAT_URL सेट करके दोबारा बिल्ड करें।'
+  },
+  chatFailed: {
+    en: 'That did not go through. Try again in a moment.',
+    kn: 'ಅದು ಕಳುಹಿಸಲಾಗಲಿಲ್ಲ. ಸ್ವಲ್ಪ ಸಮಯದ ನಂತರ ಪ್ರಯತ್ನಿಸಿ.',
+    hi: 'यह नहीं भेजा जा सका। थोड़ी देर बाद कोशिश करें।'
+  },
+  chatOffline: {
+    en: 'No connection. The map still works offline, but questions need signal.',
+    kn: 'ಸಂಪರ್ಕವಿಲ್ಲ. ನಕ್ಷೆ ಆಫ್‌ಲೈನ್‌ನಲ್ಲಿ ಕೆಲಸ ಮಾಡುತ್ತದೆ, ಆದರೆ ಪ್ರಶ್ನೆಗಳಿಗೆ ಸಿಗ್ನಲ್ ಬೇಕು.',
+    hi: 'कनेक्शन नहीं है। नक्शा ऑफ़लाइन चलता है, पर सवालों के लिए सिग्नल चाहिए।'
+  },
   avoidSteps: { en: 'Avoid stairs', kn: 'ಮೆಟ್ಟಿಲು ತಪ್ಪಿಸಿ', hi: 'सीढ़ियाँ न लें' },
   noStepFree: {
     en: 'No step-free route is mapped here yet, so this one uses stairs.',

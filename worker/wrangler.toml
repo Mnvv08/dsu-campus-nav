@@ -1,0 +1,6 @@
+name = "dsu-campus-chat"
+main = "index.js"
+compatibility_date = "2025-01-01"
+
+# The API key is set with `wrangler secret put ANTHROPIC_API_KEY`.
+# Never put it in this file — wrangler.toml is committed to the repo.

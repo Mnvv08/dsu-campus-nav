@@ -1,5 +1,6 @@
 import { useState, useMemo, useCallback, useEffect } from 'react';
 import MapView from './components/MapView';
+import Chat from './components/Chat';
 import campus from './data/places.json';
 import tasks from './data/tasks.json';
 import pathData from './data/paths.json';
@@ -72,6 +73,8 @@ export default function App() {
   const origin = position ?? anchor;
   const [routing, setRouting] = useState(false);
   const [avoidSteps, setAvoidSteps] = useState(false);
+  const [chatOpen, setChatOpen] = useState(false);
+  const [activeTask, setActiveTask] = useState(null);
 
   const present = useMemo(() => {
     const seen = new Set(places.map(p => p.category));
@@ -83,9 +86,17 @@ export default function App() {
     [query, places, lang]
   );
 
-  const searching = query.trim().length > 0;
+  const typing = query.trim().length > 0;
+  const searching = typing || activeTask !== null;
+
+  // A chip names a task outright, so there is no need to guess intent
+  // from text that may be entirely stopwords.
+  const shownTask = typing ? search.task : activeTask;
 
   const visible = useMemo(() => {
+    if (activeTask && !typing) {
+      return places.filter(p => p.category === activeTask.category);
+    }
     if (searching) {
       // Several units can share a building; the map wants each pin once.
       const seen = new Set();
@@ -94,15 +105,15 @@ export default function App() {
         .map(r => r.place);
     }
     return filter ? places.filter(p => p.category === filter) : places;
-  }, [searching, search.results, places, filter]);
+  }, [activeTask, typing, searching, search.results, places, filter]);
 
   const listed = useMemo(() => {
     // While searching, relevance ordering wins; browsing sorts by distance.
-    if (searching) return search.results;
+    if (typing) return search.results;
     const rows = visible.map(p => ({ place: p, unit: null }));
     if (!origin) return rows;
     return rows.sort((a, b) => distance(origin, a.place) - distance(origin, b.place));
-  }, [searching, search.results, visible, origin]);
+  }, [typing, search.results, visible, origin]);
 
   // Only offer prompts we can actually answer from the current dataset.
   const suggestions = useMemo(() => {
@@ -210,6 +221,10 @@ export default function App() {
           </div>
         )}
 
+        <button className="askbtn" onClick={() => setChatOpen(true)}>
+          {t('chatOpen', lang)}
+        </button>
+
         <div className="locate">
           <button
             className={locating ? 'ghost' : 'primary'}
@@ -236,21 +251,25 @@ export default function App() {
             placeholder={t('searchHint', lang)}
             aria-label="Search the campus"
           />
-          {searching && (
-            <button className="clear" onClick={() => setQuery('')} aria-label="Clear search">
+          {(typing || activeTask) && (
+            <button
+              className="clear"
+              onClick={() => { setQuery(''); setActiveTask(null); }}
+              aria-label="Clear search"
+            >
               &times;
             </button>
           )}
         </div>
 
-        {searching && search.task && (
-          <p className="taskanswer">{taskText(search.task, 'answer', lang)}</p>
+        {shownTask && (
+          <p className="taskanswer">{taskText(shownTask, 'answer', lang)}</p>
         )}
 
         {!searching && (
           <div className="prompts">
             {suggestions.map(tk => (
-              <button key={tk.id} className="prompt" onClick={() => setQuery(taskText(tk, 'question', lang))}>
+              <button key={tk.id} className="prompt" onClick={() => setActiveTask(tk)}>
                 {taskText(tk, 'question', lang)}
               </button>
             ))}
@@ -283,7 +302,7 @@ export default function App() {
             searching ? (
               <div className="empty">
                 <p>{t('noMatch', lang)}</p>
-                <p>{search.task ? t('taskNotMapped', lang) : t('noMatchHelp', lang)}</p>
+                <p>{shownTask ? t('taskNotMapped', lang) : t('noMatchHelp', lang)}</p>
               </div>
             ) : (
               <div className="empty">
@@ -320,6 +339,15 @@ export default function App() {
           )}
         </div>
       </aside>
+
+      {chatOpen && (
+        <Chat
+          places={places}
+          lang={lang}
+          onClose={() => setChatOpen(false)}
+          onMention={p => select(p)}
+        />
+      )}
 
       {selected && (
         <div className="sheet">
