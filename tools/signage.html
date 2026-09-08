@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DSU Signage Generator</title>
+<style>
+  :root{
+    --ink:#101413; --panel:#161c1a; --line:#2b3532; --field:#0d1211;
+    --text:#e6ece9; --muted:#8d9c97; --live:#4ee39a;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--ink);color:var(--text);
+    font:15px/1.5 "Inter",system-ui,-apple-system,sans-serif}
+
+  .bar{
+    position:sticky;top:0;z-index:5;
+    display:flex;flex-wrap:wrap;gap:14px;align-items:flex-end;
+    padding:20px 26px;background:var(--panel);border-bottom:1px solid var(--line);
+  }
+  .bar h1{margin:0;font-size:19px;font-weight:600;flex:1 1 100%}
+  .bar p{margin:0;flex:1 1 100%;color:var(--muted);font-size:13px}
+  label{display:block;font-size:12px;color:var(--muted);margin-bottom:5px}
+  input,select{
+    padding:9px 11px;background:var(--field);color:var(--text);
+    border:1px solid var(--line);border-radius:6px;font:inherit;font-size:14px;
+  }
+  input{width:340px}
+  button{
+    font:inherit;font-size:14px;font-weight:600;padding:10px 16px;
+    border-radius:6px;border:1px solid var(--live);
+    background:var(--live);color:#06170f;cursor:pointer;
+  }
+  button.sec{background:var(--field);color:var(--text);border-color:var(--line);font-weight:500}
+  #file{display:none}
+
+  .sheet{padding:26px}
+  .note{color:var(--muted);font-size:13px;max-width:70ch;margin:0 0 22px}
+
+  /* Posters are laid out at A5 proportions so print output is predictable. */
+  .poster{
+    width:148mm;height:210mm;
+    background:#fff;color:#101413;
+    padding:16mm 14mm;margin:0 auto 20px;
+    display:flex;flex-direction:column;align-items:center;text-align:center;
+    page-break-after:always;
+  }
+  .poster h2{margin:0;font-size:30px;font-weight:700;letter-spacing:-.02em;line-height:1.15}
+  .poster .sub{margin:6px 0 0;font-size:15px;color:#5a6663}
+  .qr{margin:12mm 0 10mm}
+  .qr img,.qr canvas{display:block;width:70mm;height:70mm}
+  .poster .cta{margin:0;font-size:19px;font-weight:600;line-height:1.35}
+  .poster .cta span{display:block;margin-top:5px;font-weight:500;font-size:17px}
+  .poster .url{
+    margin-top:auto;padding-top:8mm;
+    font-size:12px;color:#5a6663;word-break:break-all;
+  }
+  .poster .rule{width:28mm;height:3px;background:#101413;margin:8mm 0}
+
+  @media print{
+    .bar,.note{display:none}
+    body{background:#fff}
+    .sheet{padding:0}
+    .poster{margin:0;box-shadow:none}
+    @page{size:A5;margin:0}
+  }
+</style>
+</head>
+<body>
+
+<div class="bar">
+  <h1>Campus signage</h1>
+  <p>Generates a printable poster for each gate and landmark, with a QR code that opens the map already centred on that spot.</p>
+
+  <div>
+    <label for="base">Live site address</label>
+    <input id="base" value="https://mnvv08.github.io/dsu-campus-nav/">
+  </div>
+
+  <div>
+    <label for="cat">Include</label>
+    <select id="cat">
+      <option value="gate">Gates only</option>
+      <option value="gate,landmark">Gates and landmarks</option>
+      <option value="gate,landmark,hostel,admin">Gates, landmarks, hostels, offices</option>
+      <option value="*">Everything</option>
+    </select>
+  </div>
+
+  <button id="make">Generate</button>
+  <button class="sec" id="load">Load places</button>
+  <button class="sec" id="print" disabled>Print</button>
+  <input type="file" id="file" accept=".json">
+</div>
+
+<div class="sheet">
+  <p class="note" id="status">Load your <code>places.json</code> to begin.</p>
+  <div id="out"></div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script>
+const $ = id => document.getElementById(id);
+let places = [];
+
+$('load').addEventListener('click', () => $('file').click());
+
+$('file').addEventListener('change', e => {
+  const f = e.target.files[0];
+  if (!f) return;
+  const r = new FileReader();
+  r.onload = () => {
+    try {
+      const d = JSON.parse(r.result);
+      places = d.places || [];
+      $('status').textContent =
+        `${places.length} places loaded. Choose what to include, then generate.`;
+    } catch {
+      $('status').textContent = 'That file could not be read as places JSON.';
+    }
+  };
+  r.readAsText(f);
+  e.target.value = '';
+});
+
+$('make').addEventListener('click', () => {
+  if (!places.length) {
+    $('status').textContent = 'Load your places.json first.';
+    return;
+  }
+
+  const pick = $('cat').value;
+  const wanted = pick === '*' ? null : new Set(pick.split(','));
+  const chosen = wanted ? places.filter(p => wanted.has(p.category)) : places;
+
+  const out = $('out');
+  out.innerHTML = '';
+
+  if (!chosen.length) {
+    $('status').textContent =
+      'Nothing matches that selection. Map some gates in the picker first.';
+    $('print').disabled = true;
+    return;
+  }
+
+  let base = $('base').value.trim();
+  if (!base.endsWith('/')) base += '/';
+
+  chosen.forEach(p => {
+    const url = `${base}?at=${encodeURIComponent(p.id)}`;
+
+    const poster = document.createElement('div');
+    poster.className = 'poster';
+    poster.innerHTML = `
+      <h2>${esc(p.name)}</h2>
+      <p class="sub">Dayananda Sagar University &middot; Harohalli</p>
+      <div class="rule"></div>
+      <div class="qr"></div>
+      <p class="cta">
+        Scan to find your way
+        <span lang="kn">ದಾರಿ ತಿಳಿಯಲು ಸ್ಕ್ಯಾನ್ ಮಾಡಿ</span>
+        <span lang="hi">रास्ता जानने के लिए स्कैन करें</span>
+      </p>
+      <p class="url">${esc(url)}</p>
+    `;
+
+    out.appendChild(poster);
+
+    // High correction level, because posters outdoors get rained on,
+    // scuffed and partly covered.
+    new QRCode(poster.querySelector('.qr'), {
+      text: url,
+      width: 560,
+      height: 560,
+      correctLevel: QRCode.CorrectLevel.H
+    });
+  });
+
+  $('status').textContent = `${chosen.length} posters ready.`;
+  $('print').disabled = false;
+});
+
+$('print').addEventListener('click', () => window.print());
+
+function esc(s){
+  return String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+}
+</script>
+</body>
+</html>

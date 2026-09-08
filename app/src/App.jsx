@@ -25,6 +25,14 @@ function reportUrl(place) {
   return `${REPO}/issues/new?title=${encodeURIComponent('Correction: ' + place.name)}&body=${encodeURIComponent(body)}`;
 }
 
+// A QR code at a gate can say where it is: ?at=main-gate. That gives a
+// newcomer an origin before GPS has locked on, which on arrival is
+// exactly when the fix is slowest and the person is most lost.
+function anchorFromUrl(places) {
+  const id = new URLSearchParams(window.location.search).get('at');
+  return id ? places.find(p => p.id === id) ?? null : null;
+}
+
 export default function App() {
   const [query, setQuery] = useState('');
   const [selected, setSelected] = useState(null);
@@ -45,6 +53,11 @@ export default function App() {
 
   // The graph never changes at runtime, so build it once.
   const graph = useMemo(() => buildGraph(pathData.paths ?? []), []);
+  const [anchor, setAnchor] = useState(() => anchorFromUrl(campus.places ?? []));
+
+  // A live GPS fix always beats a scanned sign, but until one arrives the
+  // anchor stands in for it.
+  const origin = position ?? anchor;
   const [routing, setRouting] = useState(false);
 
   const present = useMemo(() => {
@@ -65,9 +78,9 @@ export default function App() {
   }, [searching, search.results, places, filter]);
 
   const listed = useMemo(() => {
-    if (!position) return visible;
-    return [...visible].sort((a, b) => distance(position, a) - distance(position, b));
-  }, [visible, position]);
+    if (!origin) return visible;
+    return [...visible].sort((a, b) => distance(origin, a) - distance(origin, b));
+  }, [visible, origin]);
 
   // Only offer prompts we can actually answer from the current dataset.
   const suggestions = useMemo(() => {
@@ -122,16 +135,16 @@ export default function App() {
   const offCampus = position ? distance(position, campus.center) > 3000 : false;
 
   const walk = useMemo(() => {
-    if (!routing || !position || !selected) return null;
-    const r = route(graph, position, selected);
+    if (!routing || !origin || !selected) return null;
+    const r = route(graph, origin, selected);
     if (r) return r;
     // No usable network here — fall back to a straight line, but say so.
     return {
-      coords: [[position.lat, position.lng], [selected.lat, selected.lng]],
-      metres: distance(position, selected),
+      coords: [[origin.lat, origin.lng], [selected.lat, selected.lng]],
+      metres: distance(origin, selected),
       direct: true
     };
-  }, [routing, position, selected, graph]);
+  }, [routing, origin, selected, graph]);
 
   // Directions are about one destination; changing it should reset them.
   useEffect(() => { setRouting(false); }, [selected]);
@@ -165,6 +178,15 @@ export default function App() {
             ))}
           </div>
         </header>
+
+        {anchor && !position && (
+          <div className="anchor">
+            <p>
+              {t('youAreAt', lang)} <strong>{placeName(anchor, lang)}</strong>
+            </p>
+            <button onClick={() => setAnchor(null)}>{t('notHere', lang)}</button>
+          </div>
+        )}
 
         <div className="locate">
           <button
@@ -252,7 +274,7 @@ export default function App() {
             )
           ) : (
             listed.map(p => {
-              const away = position ? distance(position, p) : null;
+              const away = origin ? distance(origin, p) : null;
               return (
                 <button
                   key={p.id}
@@ -283,13 +305,13 @@ export default function App() {
           <h2>{placeName(selected, lang)}</h2>
           <p className="meta">
             {categoryLabel(selected.category, lang)}
-            {position && ` · ${walkTime(distance(position, selected), lang)}`}
+            {origin && ` · ${walkTime(distance(origin, selected), lang)}`}
           </p>
           {placeNotes(selected, lang) && <p className="notes">{placeNotes(selected, lang)}</p>}
           {selected.aliases?.length > 0 && (
             <p className="aliases">{t('alsoCalled', lang)} {selected.aliases.join(', ')}</p>
           )}
-          {position ? (
+          {origin ? (
             <button
               className={routing ? 'ghost route' : 'primary route'}
               onClick={() => setRouting(!routing)}

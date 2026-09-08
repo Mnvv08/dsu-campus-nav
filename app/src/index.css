@@ -234,3 +234,18 @@ button:focus-visible, .row:focus-visible { outline: 2px solid var(--live); outli
 }
 .lang:hover { color: var(--text); }
 .lang.on { background: var(--live); color: #06170f; border-color: transparent; font-weight: 500; }
+
+.anchor {
+  padding: 13px 22px;
+  border-bottom: 1px solid var(--line);
+  border-left: 2px solid var(--live);
+  background: var(--field);
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+}
+.anchor p { margin: 0; font-size: 13px; color: var(--muted); }
+.anchor strong { color: var(--text); font-weight: 500; }
+.anchor button {
+  flex: none; padding: 5px 10px; font-size: 12px;
+  background: none; color: var(--muted); border: 1px solid var(--line); border-radius: 6px;
+}
+.anchor button:hover { color: var(--text); border-color: var(--live); }
