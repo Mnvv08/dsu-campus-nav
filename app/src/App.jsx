@@ -1,6 +1,7 @@
 import { useState, useMemo, useCallback, useEffect } from 'react';
 import MapView from './components/MapView';
 import Chat from './components/Chat';
+import Navigate from './components/Navigate';
 import campus from './data/places.json';
 import tasks from './data/tasks.json';
 import pathData from './data/paths.json';
@@ -74,6 +75,7 @@ export default function App({ startChat = false, onHome }) {
   const [routing, setRouting] = useState(false);
   const [avoidSteps, setAvoidSteps] = useState(false);
   const [chatOpen, setChatOpen] = useState(startChat);
+  const [navOn, setNavOn] = useState(false);
   const [activeTask, setActiveTask] = useState(null);
 
   const present = useMemo(() => {
@@ -180,7 +182,7 @@ export default function App({ startChat = false, onHome }) {
   }, [routing, origin, selected, graph, avoidSteps]);
 
   // Directions are about one destination; changing it should reset them.
-  useEffect(() => { setRouting(false); }, [selected]);
+  useEffect(() => { setRouting(false); setNavOn(false); }, [selected]);
 
   return (
     <div className="shell">
@@ -344,6 +346,16 @@ export default function App({ startChat = false, onHome }) {
         </div>
       </aside>
 
+      {navOn && walk && (
+        <Navigate
+          place={selected}
+          coords={walk.coords}
+          position={position}
+          lang={lang}
+          onClose={() => setNavOn(false)}
+        />
+      )}
+
       {chatOpen && (
         <Chat
           places={places}
@@ -407,6 +419,12 @@ export default function App({ startChat = false, onHome }) {
 
           {walk?.noStepFreeRoute && (
             <p className="warn">{t('noStepFree', lang)}</p>
+          )}
+
+          {walk && !walk.direct && position && !navOn && (
+            <button className="primary route" onClick={() => setNavOn(true)}>
+              {t('startNav', lang)}
+            </button>
           )}
 
           {walk && (

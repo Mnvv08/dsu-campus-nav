@@ -121,6 +121,31 @@ const UI = {
     kn: 'ಸಂಪರ್ಕವಿಲ್ಲ. ನಕ್ಷೆ ಆಫ್‌ಲೈನ್‌ನಲ್ಲಿ ಕೆಲಸ ಮಾಡುತ್ತದೆ, ಆದರೆ ಪ್ರಶ್ನೆಗಳಿಗೆ ಸಿಗ್ನಲ್ ಬೇಕು.',
     hi: 'कनेक्शन नहीं है। नक्शा ऑफ़लाइन चलता है, पर सवालों के लिए सिग्नल चाहिए।'
   },
+  startNav: { en: 'Start navigation', kn: 'ನ್ಯಾವಿಗೇಷನ್ ಪ್ರಾರಂಭಿಸಿ', hi: 'नेविगेशन शुरू करें' },
+  stopNav: { en: 'End', kn: 'ಮುಗಿಸಿ', hi: 'समाप्त करें' },
+  navDepart: {
+    en: (dir) => `Head ${dir}`,
+    kn: (dir) => `${dir} ದಿಕ್ಕಿನಲ್ಲಿ ಹೋಗಿ`,
+    hi: (dir) => `${dir} की ओर जाएँ`
+  },
+  navTurn: {
+    en: { left: 'Turn left', right: 'Turn right', 'sharp-left': 'Turn sharp left', 'sharp-right': 'Turn sharp right', 'u-turn': 'Turn around' },
+    kn: { left: 'ಎಡಕ್ಕೆ ತಿರುಗಿ', right: 'ಬಲಕ್ಕೆ ತಿರುಗಿ', 'sharp-left': 'ತೀವ್ರವಾಗಿ ಎಡಕ್ಕೆ ತಿರುಗಿ', 'sharp-right': 'ತೀವ್ರವಾಗಿ ಬಲಕ್ಕೆ ತಿರುಗಿ', 'u-turn': 'ಹಿಂತಿರುಗಿ' },
+    hi: { left: 'बाएँ मुड़ें', right: 'दाएँ मुड़ें', 'sharp-left': 'तेज़ बाएँ मुड़ें', 'sharp-right': 'तेज़ दाएँ मुड़ें', 'u-turn': 'वापस मुड़ें' }
+  },
+  navArrived: { en: "You've arrived", kn: 'ನೀವು ತಲುಪಿದ್ದೀರಿ', hi: 'आप पहुँच गए' },
+  navThenContinue: { en: 'then continue for', kn: 'ನಂತರ ಮುಂದುವರಿಸಿ', hi: 'फिर आगे बढ़ें' },
+  navRemaining: { en: 'remaining', kn: 'ಬಾಕಿ', hi: 'शेष' },
+  navOffRoute: {
+    en: "You've wandered off the traced path. Directions may not be reliable here.",
+    kn: 'ನೀವು ಗುರುತಿಸಿದ ದಾರಿಯಿಂದ ಹೊರಗೆ ಹೋಗಿದ್ದೀರಿ. ಇಲ್ಲಿ ಸೂಚನೆಗಳು ನಿಖರವಾಗಿಲ್ಲದಿರಬಹುದು.',
+    hi: 'आप दर्ज किए गए रास्ते से भटक गए हैं। यहाँ दिशा-निर्देश सही न हो सकते हैं।'
+  },
+  navDir: {
+    en: { north:'north', northeast:'northeast', east:'east', southeast:'southeast', south:'south', southwest:'southwest', west:'west', northwest:'northwest' },
+    kn: { north:'ಉತ್ತರ', northeast:'ಈಶಾನ್ಯ', east:'ಪೂರ್ವ', southeast:'ಆಗ್ನೇಯ', south:'ದಕ್ಷಿಣ', southwest:'ನೈಋತ್ಯ', west:'ಪಶ್ಚಿಮ', northwest:'ವಾಯುವ್ಯ' },
+    hi: { north:'उत्तर', northeast:'उत्तर-पूर्व', east:'पूर्व', southeast:'दक्षिण-पूर्व', south:'दक्षिण', southwest:'दक्षिण-पश्चिम', west:'पश्चिम', northwest:'उत्तर-पश्चिम' }
+  },
   avoidSteps: { en: 'Avoid stairs', kn: 'ಮೆಟ್ಟಿಲು ತಪ್ಪಿಸಿ', hi: 'सीढ़ियाँ न लें' },
   noStepFree: {
     en: 'No step-free route is mapped here yet, so this one uses stairs.',
