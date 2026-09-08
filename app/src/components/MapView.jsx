@@ -1,14 +1,27 @@
 import { useEffect, useRef } from 'react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
-import { colorFor } from '../lib/categories';
+import { CATEGORIES, colorFor, glyphFor, categoryLabel } from '../lib/categories';
 
-const placeIcon = color =>
+// A drop-shaped pin with a category glyph inside, rather than a plain
+// dot. A parent unfamiliar with the app can tell a hostel pin from a
+// medical pin at a glance instead of needing to click every marker to
+// find out what it is.
+const placeIcon = (color, glyph, active) =>
   L.divIcon({
     className: '',
-    html: `<span class="pin" style="--pin:${color}"></span>`,
-    iconSize: [16, 16],
-    iconAnchor: [8, 8]
+    html: `
+      <span class="pin${active ? ' pin-active' : ''}" style="--pin:${color}">
+        <svg viewBox="0 0 28 34" width="30" height="36">
+          <path d="M14 0C6.3 0 0 6.3 0 14c0 9.8 12.2 18.8 13.2 19.5.5.4 1.1.4 1.6 0C15.8 32.8 28 23.8 28 14 28 6.3 21.7 0 14 0z"
+                fill="var(--pin)" stroke="#101413" stroke-width="1.5"/>
+          <circle cx="14" cy="13" r="9.5" fill="#101413" opacity=".92"/>
+          <text x="14" y="17.5" font-size="12" text-anchor="middle">${glyph}</text>
+        </svg>
+      </span>`,
+    iconSize: [30, 36],
+    iconAnchor: [15, 34],
+    tooltipAnchor: [0, -30]
   });
 
 const youIcon = L.divIcon({
@@ -18,7 +31,7 @@ const youIcon = L.divIcon({
   iconAnchor: [9, 9]
 });
 
-export default function MapView({ center, places, selected, onSelect, position, accuracy, routeLine }) {
+export default function MapView({ center, places, selected, onSelect, position, accuracy, routeLine, lang = 'en' }) {
   const holder = useRef(null);
   const map = useRef(null);
   const markers = useRef(new Map());
@@ -41,6 +54,17 @@ export default function MapView({ center, places, selected, onSelect, position, 
     ).addTo(m);
 
     L.control.zoom({ position: 'bottomright' }).addTo(m);
+
+    // Permanent labels help a first-time visitor, but at a zoomed-out
+    // view with many pins close together they overlap into noise. Hide
+    // them below a threshold rather than showing every name at once.
+    const LABEL_ZOOM = 17;
+    const syncLabelVisibility = () => {
+      holder.current?.classList.toggle('labels-hidden', m.getZoom() < LABEL_ZOOM);
+    };
+    m.on('zoomend', syncLabelVisibility);
+    syncLabelVisibility();
+
     map.current = m;
 
     return () => m.remove();
@@ -55,9 +79,16 @@ export default function MapView({ center, places, selected, onSelect, position, 
     markers.current.clear();
 
     places.forEach(p => {
-      const mk = L.marker([p.lat, p.lng], { icon: placeIcon(colorFor(p.category)) })
+      const mk = L.marker([p.lat, p.lng], {
+        icon: placeIcon(colorFor(p.category), glyphFor(p.category))
+      })
         .addTo(m)
-        .bindTooltip(p.name, { direction: 'top', offset: [0, -10] })
+        // permanent: the name is always visible, not hidden behind a
+        // hover a first-time visitor has no reason to try.
+        .bindTooltip(p.name, {
+          direction: 'top', offset: [0, -32],
+          permanent: true, className: 'placelabel'
+        })
         .on('click', () => onSelect(p));
       markers.current.set(p.id, mk);
     });
@@ -73,10 +104,15 @@ export default function MapView({ center, places, selected, onSelect, position, 
 
   // Pan to whatever is selected.
   useEffect(() => {
-    if (!selected || !map.current) return;
+    if (!map.current) return;
+    markers.current.forEach((mk, id) => {
+      const p = places.find(x => x.id === id);
+      if (!p) return;
+      mk.setIcon(placeIcon(colorFor(p.category), glyphFor(p.category), id === selected?.id));
+    });
+    if (!selected) return;
     map.current.setView([selected.lat, selected.lng], 19, { animate: true });
-    markers.current.get(selected.id)?.openTooltip();
-  }, [selected]);
+  }, [selected, places]);
 
   // Draw the walking route. Two overlaid polylines: a dark casing under a
   // bright core, so the line stays readable over satellite imagery.
@@ -117,5 +153,22 @@ export default function MapView({ center, places, selected, onSelect, position, 
     }
   }, [position, accuracy]);
 
-  return <div ref={holder} className="map" />;
+  const present = [...new Set(places.map(p => p.category))];
+
+  return (
+    <div className="mapwrap">
+      <div ref={holder} className="map" />
+      {present.length > 0 && (
+        <details className="legend">
+          <summary>Legend</summary>
+          {present.map(c => (
+            <div key={c} className="legenditem">
+              <span className="legendswatch" style={{ background: colorFor(c) }} />
+              {categoryLabel(c, lang)}
+            </div>
+          ))}
+        </details>
+      )}
+    </div>
+  );
 }

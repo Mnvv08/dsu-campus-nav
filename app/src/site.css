@@ -1,0 +1,151 @@
+/* Landing page. Scoped under .site so nothing here reaches the map UI.
+   The editorial palette is pulled from the campus itself as seen from
+   above — sand, bare ground and terracotta roofs — while mint stays
+   reserved for things you can actually press. */
+
+.site {
+  --sand: #d99a52;
+  --paper: #e8e2d6;
+  --dim: #96907f;
+  --edge: #2e2a22;
+  --deep: #14120e;
+
+  /* body is a flex row for the map/panel split, so the landing page has
+     to claim the full width rather than shrink to its content. */
+  flex: 1;
+  width: 100%;
+  min-width: 0;
+  height: 100%;
+  overflow-y: auto;
+  background: var(--deep);
+  color: var(--paper);
+  font: 16px/1.6 "Inter", system-ui, -apple-system, sans-serif;
+}
+
+.site h1, .site h2, .site h3 { letter-spacing: -.025em; }
+.site a { color: inherit; }
+
+/* Nav */
+.sitenav {
+  position: sticky; top: 0; z-index: 10;
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 20px;
+  padding: 16px 40px;
+  background: rgba(20, 18, 14, .92);
+  backdrop-filter: blur(8px);
+  border-bottom: 1px solid var(--edge);
+}
+.mark { font-size: 14px; font-weight: 600; }
+.navlinks { display: flex; gap: 22px; }
+.navlinks a { color: var(--dim); font-size: 14px; text-decoration: none; }
+.navlinks a:hover { color: var(--paper); }
+
+/* Hero */
+.hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 520px);
+  gap: 56px; align-items: center;
+  padding: 84px 40px 96px;
+  max-width: 1180px; margin: 0 auto;
+}
+.hero h1 {
+  margin: 0;
+  font-size: clamp(38px, 5vw, 60px);
+  font-weight: 700;
+  line-height: 1.05;
+  max-width: 12ch;
+}
+.lede { margin: 22px 0 0; color: var(--dim); font-size: 18px; max-width: 54ch; }
+.lede.narrow { max-width: 60ch; }
+
+.actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 32px; }
+.go, .alt {
+  font: inherit; font-size: 15px; font-weight: 600;
+  padding: 12px 22px; border-radius: 8px; cursor: pointer;
+  border: 1px solid transparent;
+}
+.go { background: #4ee39a; color: #06170f; }
+.go:hover { filter: brightness(1.08); }
+.alt {
+  background: none; color: var(--paper);
+  border-color: var(--edge);
+  text-decoration: none; display: inline-block;
+}
+.alt:hover { border-color: var(--sand); }
+
+.counts { margin: 22px 0 0; color: var(--dim); font-size: 14px; }
+
+.plan { width: 100%; height: auto; border: 1px solid var(--edge); border-radius: 6px; }
+
+/* Bands */
+.band {
+  max-width: 1180px; margin: 0 auto;
+  padding: 72px 40px;
+  border-top: 1px solid var(--edge);
+}
+.band h2 {
+  margin: 0 0 34px;
+  font-size: clamp(26px, 3vw, 34px);
+  font-weight: 650;
+}
+.aside { margin: 34px 0 0; color: var(--dim); font-size: 15px; max-width: 62ch; }
+
+/* Facts — deliberately unequal, the number is the point */
+.facts { display: grid; grid-template-columns: repeat(3, 1fr); gap: 34px; }
+.fact b {
+  display: block;
+  font-size: 40px; font-weight: 700;
+  color: var(--sand);
+  line-height: 1;
+  margin-bottom: 12px;
+}
+.fact.big b { font-size: 62px; }
+.fact p { margin: 0; color: var(--dim); font-size: 15px; }
+
+/* Feature list as definitions, not cards */
+.does { display: grid; grid-template-columns: repeat(2, 1fr); gap: 30px 46px; margin: 0; }
+.does dt { font-size: 17px; font-weight: 600; margin-bottom: 7px; }
+.does dd { margin: 0; color: var(--dim); font-size: 15px; }
+
+/* Pipeline — numbered because it genuinely is a sequence.
+   The number is a real element, not a ::before: a pseudo-element counts
+   as a grid item too, and with three items (number, heading, paragraph)
+   against two columns, the layout wraps unpredictably — the paragraph
+   was landing in the 54px number column and breaking one word per line. */
+.pipeline { list-style: none; margin: 38px 0 0; padding: 0; }
+.pipeline li {
+  display: grid; grid-template-columns: 54px minmax(0, 1fr); gap: 22px;
+  padding: 24px 0;
+  border-top: 1px solid var(--edge);
+}
+.pipeline .stepnum {
+  font-size: 26px; font-weight: 700; color: var(--sand);
+  line-height: 1.1;
+}
+.pipeline h3 { margin: 0 0 6px; font-size: 18px; font-weight: 600; }
+.pipeline p { margin: 0; color: var(--dim); font-size: 15px; max-width: 66ch; }
+
+.closing .actions { margin-top: 30px; }
+
+.sitefoot {
+  max-width: 1180px; margin: 0 auto;
+  padding: 40px 40px 64px;
+  border-top: 1px solid var(--edge);
+  color: var(--dim); font-size: 13px;
+}
+.sitefoot p { margin: 0 0 8px; max-width: 74ch; }
+
+.site button:focus-visible, .site a:focus-visible {
+  outline: 2px solid #4ee39a; outline-offset: 3px;
+}
+
+@media (max-width: 900px) {
+  .hero { grid-template-columns: 1fr; gap: 40px; padding: 56px 22px 64px; }
+  .facts, .does { grid-template-columns: 1fr; gap: 26px; }
+  .fact.big b { font-size: 48px; }
+  .band { padding: 52px 22px; }
+  .sitenav { padding: 14px 22px; }
+  .navlinks { gap: 16px; }
+  .navlinks a:nth-child(3) { display: none; }
+  .sitefoot { padding: 32px 22px 48px; }
+}

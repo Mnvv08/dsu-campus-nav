@@ -157,7 +157,10 @@ button:focus-visible, .row:focus-visible { outline: 2px solid var(--live); outli
 /* Phone: map on top, panel below */
 @media (max-width: 760px) {
   .shell { flex-direction: column; }
-  .map { height: 45vh; flex: none; }
+  /* The fixed-height rule has to live on .mapwrap, the actual flex item
+     in .shell — .map is now a plain 100%-filled child of it, so sizing
+     .map directly here would do nothing. */
+  .mapwrap { height: 45vh; flex: none; }
   .panel { width: 100%; flex: 1; border-left: 0; border-top: 1px solid var(--line); min-height: 0; }
   .sheet { left: 12px; right: 12px; bottom: 12px; width: auto; }
 }
@@ -326,3 +329,63 @@ button:focus-visible, .row:focus-visible { outline: 2px solid var(--live); outli
   .chat { right: 12px; left: 12px; bottom: 12px; width: auto; max-height: 68vh; }
   .askbtn { margin: 14px 22px 0; }
 }
+
+/* Back to the landing page from inside the map */
+.backhome {
+  display: block;
+  margin: 14px 0 0;
+  padding: 8px 12px;
+  border-radius: 7px;
+  background: none;
+  color: var(--muted);
+  border: 1px solid var(--line);
+  font-size: 13px;
+}
+.backhome:hover { color: var(--text); border-color: var(--live); }
+
+
+/* Marker pins */
+.pin { display: block; filter: drop-shadow(0 2px 4px rgba(0,0,0,.5)); }
+.pin-active { filter: drop-shadow(0 2px 4px rgba(0,0,0,.5)) drop-shadow(0 0 6px var(--pin)); }
+.pin svg text { fill: var(--pin); font-weight: 600; }
+
+.placelabel {
+  background: rgba(13, 18, 17, .88);
+  border: 1px solid var(--line);
+  color: var(--text);
+  font-size: 11px; font-weight: 500;
+  padding: 2px 7px;
+  border-radius: 4px;
+  box-shadow: none;
+}
+.placelabel::before { display: none; }
+
+/* Below the label zoom threshold, pins stay but names are hidden to
+   avoid overlapping clutter when many places are close together. */
+.map.labels-hidden .placelabel { display: none; }
+
+/* Legend — top-left, deliberately not bottom-left, since the place
+   detail sheet also anchors bottom-left and the two would stack. */
+.legend {
+  position: absolute; left: 12px; top: 12px;
+  z-index: 500;
+  background: rgba(13, 18, 17, .92);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-size: 12px;
+  max-width: 200px;
+}
+.legend summary {
+  cursor: pointer; color: var(--muted); font-weight: 500;
+  list-style: none; display: flex; align-items: center; gap: 6px;
+}
+.legend summary::-webkit-details-marker { display: none; }
+.legend summary::before { content: '▸'; font-size: 10px; }
+.legend[open] summary::before { content: '▾'; }
+.legend[open] summary { margin-bottom: 8px; color: var(--text); }
+.legenditem { display: flex; align-items: center; gap: 7px; padding: 2px 0; color: var(--dim); }
+.legendswatch { width: 10px; height: 10px; border-radius: 50%; flex: none; }
+
+.mapwrap { position: relative; flex: 1; height: 100%; min-width: 0; }
+.mapwrap .map { height: 100%; width: 100%; }

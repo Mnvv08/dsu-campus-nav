@@ -4,14 +4,137 @@
   "updated": "2026-09-08",
   "places": [
     {
-      "id": "main-gate",
-      "name": "Main Gate",
-      "aliases": ["Front gate", "Kanakapura Road entrance"],
+      "id": "main-campus",
+      "name": "DSU Main Campus",
+      "name_kn": "ಡಿಎಸ್‌ಯು ಮುಖ್ಯ ಕ್ಯಾಂಪಸ್",
+      "name_hi": "डीएसयू मुख्य परिसर",
+      "aliases": ["Main gate area", "Campus entrance"],
       "category": "gate",
+      "confidence": "confirmed",
+      "notes": "The campus's official Google location. Treat this as the general entrance area rather than the exact gate — the precise gate position still needs to be marked from the ground.",
+      "lat": 12.6606692,
+      "lng": 77.4508399
+    },
+    {
+      "id": "school-of-engineering",
+      "name": "School of Engineering",
+      "name_kn": "ಎಂಜಿನಿಯರಿಂಗ್ ಶಾಲೆ",
+      "name_hi": "इंजीनियरिंग स्कूल",
+      "aliases": ["Engineering block", "SoE", "Main academic building"],
+      "category": "academic",
+      "confidence": "confirmed",
+      "notes": "Confirmed from Google's listing for DSU School of Engineering. Departments, floors and the fee/admissions counter inside still need to be added.",
+      "lat": 12.6620948,
+      "lng": 77.4507423
+    },
+    {
+      "id": "hostel-boys-1",
+      "name": "S' Residence — DSU Boys Hostel",
+      "name_kn": "ಎಸ್ ರೆಸಿಡೆನ್ಸ್ — ಬಾಯ್ಸ್ ಹಾಸ್ಟೆಲ್",
+      "name_hi": "एस' रेजिडेंस — बॉयज़ हॉस्टल",
+      "aliases": ["Boys hostel", "S Residence"],
+      "category": "hostel",
+      "confidence": "confirmed",
+      "notes": "Confirmed from Google's listing. There is more than one S' Residence tower for boys on campus — see the second entry.",
+      "lat": 12.6578409,
+      "lng": 77.4475605
+    },
+    {
+      "id": "hostel-boys-2",
+      "name": "S' Residence Tower 3 — DSU Boys Hostel",
+      "name_kn": "ಎಸ್ ರೆಸಿಡೆನ್ಸ್ ಟವರ್ 3 — ಬಾಯ್ಸ್ ಹಾಸ್ಟೆಲ್",
+      "name_hi": "एस' रेजिडेंस टावर 3 — बॉयज़ हॉस्टल",
+      "aliases": ["Tower 3", "Boys hostel tower 3"],
+      "category": "hostel",
+      "confidence": "confirmed",
+      "notes": "Confirmed from Google's listing. A separate tower a short distance from the first boys hostel building.",
+      "lat": 12.6581029,
+      "lng": 77.4472115
+    },
+    {
+      "id": "cdsimer",
+      "name": "CDSIMER Hospital",
+      "name_kn": "ಸಿಡಿಎಸ್‌ಐಎಂಇಆರ್ ಆಸ್ಪತ್ರೆ",
+      "name_hi": "सीडीएसआईएमईआर अस्पताल",
+      "aliases": ["Hospital", "Medical college", "Dr Chandramma Dayananda Sagar Institute"],
+      "category": "medical",
+      "confidence": "confirmed",
+      "notes": "Confirmed from Google's listing. Campus hospital and medical college, open 24 hours. For an emergency, contact campus security immediately rather than walking there.",
+      "lat": 12.6610841,
+      "lng": 77.4494629
+    },
+    {
+      "id": "cricket-stadium",
+      "name": "DSU Cricket Stadium",
+      "name_kn": "ಡಿಎಸ್‌ಯು ಕ್ರಿಕೆಟ್ ಕ್ರೀಡಾಂಗಣ",
+      "name_hi": "डीएसयू क्रिकेट स्टेडियम",
+      "aliases": ["Cricket ground", "Sports ground"],
+      "category": "sports",
+      "confidence": "confirmed",
+      "notes": "Confirmed from Google's listing. Reviews mention the football turf, running track and basketball/tennis courts sit nearby, though their exact positions still need to be marked.",
+      "lat": 12.661681,
+      "lng": 77.4548268
+    },
+
+    {
+      "id": "central-library",
+      "name": "Central Library",
+      "name_kn": "ಕೇಂದ್ರ ಗ್ರಂಥಾಲಯ",
+      "name_hi": "केंद्रीय पुस्तकालय",
+      "aliases": ["Library", "ThinkCentre"],
+      "category": "library",
       "confidence": "guess",
-      "notes": "Placeholder example showing the schema. Replace this with a real point from the picker tool.",
-      "lat": 12.660669,
-      "lng": 77.45084
+      "notes": "Not separately listed on Google. Holds around 37,000 titles with a digital access section called ThinkCentre. Position is an estimate near the main campus point — needs correcting from the ground.",
+      "lat": 12.660100,
+      "lng": 77.452900
+    },
+    {
+      "id": "hostel-girls",
+      "name": "S' Residence — Girls Hostel",
+      "name_kn": "ಎಸ್ ರೆಸಿಡೆನ್ಸ್ — ಗರ್ಲ್ಸ್ ಹಾಸ್ಟೆಲ್",
+      "name_hi": "एस' रेजिडेंस — गर्ल्ज़ हॉस्टल",
+      "aliases": ["Girls hostel"],
+      "category": "hostel",
+      "confidence": "guess",
+      "notes": "Not separately listed on Google under this name. Position is an estimate — needs correcting from the ground.",
+      "lat": 12.663800,
+      "lng": 77.448900
+    },
+    {
+      "id": "canteen-main",
+      "name": "Main Canteen",
+      "name_kn": "ಮುಖ್ಯ ಕ್ಯಾಂಟೀನ್",
+      "name_hi": "मुख्य कैंटीन",
+      "aliases": ["Canteen", "Food court"],
+      "category": "food",
+      "confidence": "guess",
+      "notes": "Not listed on Google. Student reviews describe canteens as spread out, some several hundred metres from the main building. Position is an estimate.",
+      "lat": 12.659900,
+      "lng": 77.450900
+    },
+    {
+      "id": "admin-block",
+      "name": "Administration Block",
+      "name_kn": "ಆಡಳಿತ ಕಟ್ಟಡ",
+      "name_hi": "प्रशासनिक भवन",
+      "aliases": ["Admin", "Registrar office"],
+      "category": "admin",
+      "confidence": "guess",
+      "notes": "Not separately listed on Google. Position is an estimate near the main academic building.",
+      "lat": 12.661300,
+      "lng": 77.452400
+    },
+    {
+      "id": "bus-stop",
+      "name": "Campus Bus Point",
+      "name_kn": "ಕ್ಯಾಂಪಸ್ ಬಸ್ ನಿಲ್ದಾಣ",
+      "name_hi": "परिसर बस स्टॉप",
+      "aliases": ["Bus stop", "Shuttle point"],
+      "category": "transport",
+      "confidence": "guess",
+      "notes": "Not listed on Google. Position is an estimate near the main entrance.",
+      "lat": 12.658700,
+      "lng": 77.449700
     }
   ]
 }

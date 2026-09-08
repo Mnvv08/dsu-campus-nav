@@ -46,7 +46,7 @@ function anchorFromUrl(places) {
   return id ? places.find(p => p.id === id) ?? null : null;
 }
 
-export default function App() {
+export default function App({ startChat = false, onHome }) {
   const [query, setQuery] = useState('');
   const [selected, setSelected] = useState(null);
   const [filter, setFilter] = useState(null);
@@ -73,7 +73,7 @@ export default function App() {
   const origin = position ?? anchor;
   const [routing, setRouting] = useState(false);
   const [avoidSteps, setAvoidSteps] = useState(false);
-  const [chatOpen, setChatOpen] = useState(false);
+  const [chatOpen, setChatOpen] = useState(startChat);
   const [activeTask, setActiveTask] = useState(null);
 
   const present = useMemo(() => {
@@ -192,12 +192,16 @@ export default function App() {
         position={position}
         accuracy={accuracy}
         routeLine={walk?.coords}
+        lang={lang}
       />
 
       <aside className="panel">
         <header>
           <h1>{t('title', lang)}</h1>
           <p>{campus.campus}</p>
+          {onHome && (
+            <button className="backhome" onClick={onHome}>← Back to overview</button>
+          )}
           <div className="langs" role="group" aria-label="Language">
             {LANGUAGES.map(l => (
               <button

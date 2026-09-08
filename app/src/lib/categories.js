@@ -1,18 +1,25 @@
-import { t } from './i18n';
+import { t, categoryLabel } from './i18n';
+export { categoryLabel };
+// Each category gets a color and a short glyph. The glyph is what makes
+// a marker readable at a glance on satellite imagery — a plain colored
+// dot looks identical to a dozen other dots until you click it, which is
+// no help to someone standing outside not knowing which pin is theirs.
 export const CATEGORIES = {
-  gate:      { color: '#e8b04b' },
-  admin:     { color: '#6db8ff' },
-  academic:  { color: '#4ee39a' },
-  library:   { color: '#8be0ff' },
-  hostel:    { color: '#c98bff' },
-  food:      { color: '#ff9a6b' },
-  medical:   { color: '#ff7b7b' },
-  sports:    { color: '#7de37d' },
-  transport: { color: '#ffd166' },
-  parking:   { color: '#a0aeb8' },
-  utility:   { color: '#d0d0d0' },
-  landmark:  { color: '#ff6fae' }
+  gate:      { color: '#e8b04b', glyph: '⛩' },
+  admin:     { color: '#6db8ff', glyph: '🏛' },
+  academic:  { color: '#4ee39a', glyph: '🎓' },
+  library:   { color: '#8be0ff', glyph: '📖' },
+  hostel:    { color: '#c98bff', glyph: '🛏' },
+  food:      { color: '#ff9a6b', glyph: '🍴' },
+  medical:   { color: '#ff7b7b', glyph: '✚' },
+  sports:    { color: '#7de37d', glyph: '⚽' },
+  transport: { color: '#ffd166', glyph: '🚌' },
+  parking:   { color: '#a0aeb8', glyph: '🅿' },
+  utility:   { color: '#d0d0d0', glyph: '⚡' },
+  landmark:  { color: '#ff6fae', glyph: '★' }
 };
+
+export const glyphFor = c => CATEGORIES[c]?.glyph ?? '📍';
 
 export const colorFor = c => CATEGORIES[c]?.color ?? '#d0d0d0';
 
