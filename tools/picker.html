@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DSU Campus Mapper</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<style>
+  :root{
+    --ink:#101413;
+    --panel:#161c1a;
+    --line:#2b3532;
+    --field:#0d1211;
+    --text:#e6ece9;
+    --muted:#8d9c97;
+    --live:#4ee39a;
+    --warn:#e8b04b;
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%;margin:0}
+  body{
+    display:flex;
+    background:var(--ink);
+    color:var(--text);
+    font:15px/1.5 "Inter",system-ui,-apple-system,sans-serif;
+  }
+  #map{flex:1;height:100vh;background:#0d1211}
+  .leaflet-container{font-family:inherit}
+
+  aside{
+    width:400px;
+    height:100vh;
+    display:flex;
+    flex-direction:column;
+    background:var(--panel);
+    border-left:1px solid var(--line);
+  }
+  header{padding:22px 24px 18px;border-bottom:1px solid var(--line)}
+  h1{margin:0;font-size:20px;font-weight:600;letter-spacing:-.01em}
+  header p{margin:6px 0 0;color:var(--muted);font-size:13px}
+
+  .counter{
+    padding:12px 24px;
+    border-bottom:1px solid var(--line);
+    display:flex;align-items:baseline;gap:8px;
+  }
+  .counter b{font-size:26px;font-weight:600;color:var(--live)}
+  .counter span{color:var(--muted);font-size:13px}
+
+  form{padding:18px 24px;border-bottom:1px solid var(--line)}
+  .hint{
+    color:var(--warn);font-size:13px;margin:0 0 14px;
+    padding:10px 12px;border:1px solid #3d3520;background:#1d1a10;border-radius:6px;
+  }
+  label{display:block;margin-bottom:12px}
+  label span{display:block;font-size:12px;color:var(--muted);margin-bottom:5px}
+  input,select,textarea{
+    width:100%;padding:9px 11px;
+    background:var(--field);color:var(--text);
+    border:1px solid var(--line);border-radius:6px;
+    font:inherit;font-size:14px;
+  }
+  textarea{resize:vertical;min-height:56px}
+  input:focus,select:focus,textarea:focus{outline:2px solid var(--live);outline-offset:-1px;border-color:transparent}
+  .row{display:flex;gap:10px}
+  .row label{flex:1}
+
+  button{
+    font:inherit;font-size:14px;font-weight:500;
+    border-radius:6px;border:1px solid var(--line);
+    background:var(--field);color:var(--text);
+    padding:9px 14px;cursor:pointer;
+  }
+  button:hover:not(:disabled){border-color:var(--live)}
+  button:disabled{opacity:.35;cursor:not-allowed}
+  button.primary{background:var(--live);color:#06170f;border-color:var(--live);font-weight:600}
+  button.primary:hover:not(:disabled){filter:brightness(1.1)}
+
+  .list{flex:1;overflow-y:auto;padding:8px 14px}
+  .empty{color:var(--muted);font-size:13px;padding:26px 10px;text-align:center;line-height:1.6}
+  .item{
+    padding:10px 12px;border-radius:6px;cursor:pointer;
+    display:flex;justify-content:space-between;align-items:center;gap:10px;
+  }
+  .item:hover{background:var(--field)}
+  .item strong{font-weight:500;font-size:14px}
+  .item em{display:block;font-style:normal;color:var(--muted);font-size:12px;margin-top:2px}
+  .item button{padding:3px 8px;font-size:12px;color:var(--muted);border-color:transparent;background:none}
+  .item button:hover{color:#ff8080;border-color:#ff8080}
+
+  footer{padding:14px 24px;border-top:1px solid var(--line);display:flex;gap:10px}
+  footer button{flex:1}
+  #file{display:none}
+</style>
+</head>
+<body>
+
+<div id="map"></div>
+
+<aside>
+  <header>
+    <h1>DSU Campus Mapper</h1>
+    <p>Click a rooftop on the satellite view, then name it.</p>
+  </header>
+
+  <div class="counter"><b id="count">0</b><span>places recorded</span></div>
+
+  <form id="form">
+    <p class="hint" id="hint">Click the map to place your first point.</p>
+
+    <label>
+      <span>Name</span>
+      <input id="name" placeholder="Engineering Block" autocomplete="off" required>
+    </label>
+
+    <label>
+      <span>Also called (comma separated)</span>
+      <input id="aliases" placeholder="Main block, B1, Admissions building" autocomplete="off">
+    </label>
+
+    <div class="row">
+      <label>
+        <span>Category</span>
+        <select id="category">
+          <option value="academic">Academic</option>
+          <option value="admin">Admin / office</option>
+          <option value="gate">Gate / entrance</option>
+          <option value="hostel">Hostel</option>
+          <option value="food">Canteen / mess</option>
+          <option value="medical">Medical</option>
+          <option value="sports">Sports</option>
+          <option value="library">Library</option>
+          <option value="transport">Bus / transport</option>
+          <option value="parking">Parking</option>
+          <option value="utility">ATM / stationery / other</option>
+          <option value="landmark">Landmark</option>
+        </select>
+      </label>
+      <label>
+        <span>Confidence</span>
+        <select id="confidence">
+          <option value="confirmed">Confirmed</option>
+          <option value="likely">Likely</option>
+          <option value="guess">Guess</option>
+        </select>
+      </label>
+    </div>
+
+    <label>
+      <span>What happens here</span>
+      <textarea id="notes" placeholder="Fee payment, ID cards, and document submission for new students."></textarea>
+    </label>
+
+    <button type="submit" class="primary" id="save" disabled>Save place</button>
+  </form>
+
+  <div class="list" id="list">
+    <p class="empty">Nothing recorded yet.<br>Your saved places will appear here.</p>
+  </div>
+
+  <footer>
+    <button id="import">Load JSON</button>
+    <button id="export" class="primary">Export JSON</button>
+    <input type="file" id="file" accept=".json">
+  </footer>
+</aside>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script>
+const CAMPUS = [12.6606692, 77.4508399];
+
+const map = L.map('map', { zoomControl: true }).setView(CAMPUS, 17);
+
+const sat = L.tileLayer(
+  'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+  { maxZoom: 21, maxNativeZoom: 19, attribution: 'Imagery: Esri, Maxar, Earthstar Geographics' }
+).addTo(map);
+
+const labels = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+  { maxZoom: 19, opacity: 0.35, attribution: '&copy; OpenStreetMap' });
+
+L.control.layers({ 'Satellite': sat }, { 'Street overlay': labels }, { collapsed: false }).addTo(map);
+
+let places = [];
+let pending = null;
+let pendingMarker = null;
+const markers = new Map();
+
+const COLORS = {
+  academic:'#4ee39a', admin:'#6db8ff', gate:'#e8b04b', hostel:'#c98bff',
+  food:'#ff9a6b', medical:'#ff7b7b', sports:'#7de37d', library:'#8be0ff',
+  transport:'#ffd166', parking:'#a0aeb8', utility:'#d0d0d0', landmark:'#ff6fae'
+};
+
+const dot = c => L.divIcon({
+  className: '',
+  html: `<div style="width:14px;height:14px;border-radius:50%;background:${c};border:2px solid #0d1211;box-shadow:0 0 0 1px ${c}"></div>`,
+  iconSize: [14,14], iconAnchor: [7,7]
+});
+
+const $ = id => document.getElementById(id);
+
+map.on('click', e => {
+  pending = e.latlng;
+  if (pendingMarker) map.removeLayer(pendingMarker);
+  pendingMarker = L.marker(pending, { icon: dot('#ffffff'), zIndexOffset: 1000 }).addTo(map);
+  $('hint').textContent =
+    `Point set at ${pending.lat.toFixed(6)}, ${pending.lng.toFixed(6)} — now name it.`;
+  $('save').disabled = false;
+  $('name').focus();
+});
+
+$('form').addEventListener('submit', ev => {
+  ev.preventDefault();
+  if (!pending) return;
+
+  const place = {
+    id: slug($('name').value),
+    name: $('name').value.trim(),
+    aliases: $('aliases').value.split(',').map(s => s.trim()).filter(Boolean),
+    category: $('category').value,
+    confidence: $('confidence').value,
+    notes: $('notes').value.trim(),
+    lat: +pending.lat.toFixed(6),
+    lng: +pending.lng.toFixed(6)
+  };
+
+  places.push(place);
+  drawMarker(place);
+
+  map.removeLayer(pendingMarker);
+  pendingMarker = null;
+  pending = null;
+  ev.target.reset();
+  $('save').disabled = true;
+  $('hint').textContent = 'Saved. Click the map to add the next place.';
+  render();
+});
+
+function slug(s){
+  return s.toLowerCase().trim().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');
+}
+
+function drawMarker(p){
+  const m = L.marker([p.lat, p.lng], {
+    icon: dot(COLORS[p.category] || '#fff'),
+    draggable: true
+  }).addTo(map).bindTooltip(p.name, { direction:'top', offset:[0,-8] });
+
+  m.on('dragend', () => {
+    const ll = m.getLatLng();
+    p.lat = +ll.lat.toFixed(6);
+    p.lng = +ll.lng.toFixed(6);
+  });
+
+  markers.set(p.id, m);
+}
+
+function render(){
+  $('count').textContent = places.length;
+  const list = $('list');
+
+  if (!places.length){
+    list.innerHTML = '<p class="empty">Nothing recorded yet.<br>Your saved places will appear here.</p>';
+    return;
+  }
+
+  list.innerHTML = '';
+  places.forEach((p, i) => {
+    const row = document.createElement('div');
+    row.className = 'item';
+    row.innerHTML =
+      `<div><strong>${escapeHtml(p.name)}</strong>
+       <em>${p.category} · ${p.confidence}</em></div>`;
+
+    row.addEventListener('click', () => {
+      map.setView([p.lat, p.lng], 19);
+      markers.get(p.id)?.openTooltip();
+    });
+
+    const del = document.createElement('button');
+    del.textContent = 'Remove';
+    del.addEventListener('click', e => {
+      e.stopPropagation();
+      const m = markers.get(p.id);
+      if (m) map.removeLayer(m);
+      markers.delete(p.id);
+      places.splice(i, 1);
+      render();
+    });
+
+    row.appendChild(del);
+    list.appendChild(row);
+  });
+}
+
+function escapeHtml(s){
+  return s.replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+}
+
+$('export').addEventListener('click', () => {
+  if (!places.length){
+    $('hint').textContent = 'Add at least one place before exporting.';
+    return;
+  }
+  const payload = {
+    campus: 'Dayananda Sagar University — Harohalli',
+    center: { lat: CAMPUS[0], lng: CAMPUS[1] },
+    updated: new Date().toISOString().slice(0,10),
+    places
+  };
+  const url = URL.createObjectURL(
+    new Blob([JSON.stringify(payload, null, 2)], { type:'application/json' })
+  );
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'places.json';
+  a.click();
+  URL.revokeObjectURL(url);
+});
+
+$('import').addEventListener('click', () => $('file').click());
+
+$('file').addEventListener('change', e => {
+  const f = e.target.files[0];
+  if (!f) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    try {
+      const data = JSON.parse(reader.result);
+      markers.forEach(m => map.removeLayer(m));
+      markers.clear();
+      places = data.places || [];
+      places.forEach(drawMarker);
+      render();
+      if (places.length) map.fitBounds(places.map(p => [p.lat, p.lng]), { padding:[60,60] });
+      $('hint').textContent = `Loaded ${places.length} places. Click the map to add more.`;
+    } catch {
+      $('hint').textContent = 'That file could not be read as campus JSON.';
+    }
+  };
+  reader.readAsText(f);
+  e.target.value = '';
+});
+
+window.addEventListener('beforeunload', e => {
+  if (places.length) { e.preventDefault(); e.returnValue = ''; }
+});
+
+render();
+</script>
+</body>
+</html>
