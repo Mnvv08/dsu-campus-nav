@@ -222,3 +222,15 @@ button:focus-visible, .row:focus-visible { outline: 2px solid var(--live); outli
   border-bottom: 1px solid var(--line);
 }
 .fix:hover { color: var(--text); border-color: var(--live); }
+
+.langs { display: flex; gap: 6px; margin-top: 12px; }
+.lang {
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 13px;
+  background: var(--field);
+  color: var(--muted);
+  border: 1px solid var(--line);
+}
+.lang:hover { color: var(--text); }
+.lang.on { background: var(--live); color: #06170f; border-color: transparent; font-weight: 500; }

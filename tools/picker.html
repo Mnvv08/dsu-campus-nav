@@ -113,6 +113,17 @@
       <input id="name" placeholder="Engineering Block" autocomplete="off" required>
     </label>
 
+    <div class="row">
+      <label>
+        <span>Name in Kannada (optional)</span>
+        <input id="name_kn" lang="kn" autocomplete="off">
+      </label>
+      <label>
+        <span>Name in Hindi (optional)</span>
+        <input id="name_hi" lang="hi" autocomplete="off">
+      </label>
+    </div>
+
     <label>
       <span>Also called (comma separated)</span>
       <input id="aliases" placeholder="Main block, B1, Admissions building" autocomplete="off">
@@ -217,6 +228,8 @@ $('form').addEventListener('submit', ev => {
   const place = {
     id: slug($('name').value),
     name: $('name').value.trim(),
+    ...($('name_kn').value.trim() && { name_kn: $('name_kn').value.trim() }),
+    ...($('name_hi').value.trim() && { name_hi: $('name_hi').value.trim() }),
     aliases: $('aliases').value.split(',').map(s => s.trim()).filter(Boolean),
     category: $('category').value,
     confidence: $('confidence').value,

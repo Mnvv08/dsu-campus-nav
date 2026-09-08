@@ -5,7 +5,8 @@ import tasks from './data/tasks.json';
 import pathData from './data/paths.json';
 import { searchPlaces } from './lib/search';
 import { buildGraph, route } from './lib/route';
-import { CATEGORIES, colorFor, labelFor, distance, walkTime, formatDistance } from './lib/categories';
+import { CATEGORIES, colorFor, distance, walkTime, formatDistance } from './lib/categories';
+import { LANGUAGES, t, categoryLabel, placeName, placeNotes, taskText, detectLanguage } from './lib/i18n';
 
 const REPO = 'https://github.com/Mnvv08/dsu-campus-nav';
 
@@ -33,6 +34,12 @@ export default function App() {
   const [locating, setLocating] = useState(false);
   const [locError, setLocError] = useState(null);
   const [tiles, setTiles] = useState(null);
+  const [lang, setLang] = useState(detectLanguage);
+
+  useEffect(() => {
+    localStorage.setItem('dsu-lang', lang);
+    document.documentElement.lang = lang;
+  }, [lang]);
 
   const places = campus.places ?? [];
 
@@ -46,8 +53,8 @@ export default function App() {
   }, [places]);
 
   const search = useMemo(
-    () => searchPlaces(query, places, tasks),
-    [query, places]
+    () => searchPlaces(query, places, tasks, lang),
+    [query, places, lang]
   );
 
   const searching = query.trim().length > 0;
@@ -87,7 +94,7 @@ export default function App() {
     if (!locating) return;
 
     if (!('geolocation' in navigator)) {
-      setLocError('This browser cannot share your location.');
+      setLocError(t('noGeo', lang));
       setLocating(false);
       return;
     }
@@ -101,8 +108,8 @@ export default function App() {
       err => {
         setLocError(
           err.code === 1
-            ? 'Location permission was denied. Enable it in your browser settings to see where you are.'
-            : 'Your location could not be found. Signal is weak in parts of the campus.'
+            ? t('denied', lang)
+            : t('weakSignal', lang)
         );
         setLocating(false);
       },
@@ -143,8 +150,20 @@ export default function App() {
 
       <aside className="panel">
         <header>
-          <h1>Find your way around DSU</h1>
+          <h1>{t('title', lang)}</h1>
           <p>{campus.campus}</p>
+          <div className="langs" role="group" aria-label="Language">
+            {LANGUAGES.map(l => (
+              <button
+                key={l.code}
+                className={lang === l.code ? 'lang on' : 'lang'}
+                onClick={() => setLang(l.code)}
+                lang={l.code}
+              >
+                {l.label}
+              </button>
+            ))}
+          </div>
         </header>
 
         <div className="locate">
@@ -152,7 +171,7 @@ export default function App() {
             className={locating ? 'ghost' : 'primary'}
             onClick={() => setLocating(!locating)}
           >
-            {locating ? 'Stop tracking' : 'Show where I am'}
+            {locating ? t('stopLocate', lang) : t('locate', lang)}
           </button>
           {locError && <p className="error">{locError}</p>}
           {tiles > 0 && (
@@ -162,10 +181,7 @@ export default function App() {
             </p>
           )}
           {offCampus && (
-            <p className="note">
-              You are outside the campus right now. Distances below are measured
-              from where you are.
-            </p>
+            <p className="note">{t('offCampus', lang)}</p>
           )}
         </div>
 
@@ -173,7 +189,7 @@ export default function App() {
           <input
             value={query}
             onChange={e => setQuery(e.target.value)}
-            placeholder="Try 'where do I pay fees' or 'canteen'"
+            placeholder={t('searchHint', lang)}
             aria-label="Search the campus"
           />
           {searching && (
@@ -184,14 +200,14 @@ export default function App() {
         </div>
 
         {searching && search.task && (
-          <p className="taskanswer">{search.task.answer}</p>
+          <p className="taskanswer">{taskText(search.task, 'answer', lang)}</p>
         )}
 
         {!searching && (
           <div className="prompts">
-            {suggestions.map(t => (
-              <button key={t.id} className="prompt" onClick={() => setQuery(t.question)}>
-                {t.question}
+            {suggestions.map(tk => (
+              <button key={tk.id} className="prompt" onClick={() => setQuery(taskText(tk, 'question', lang))}>
+                {taskText(tk, 'question', lang)}
               </button>
             ))}
           </div>
@@ -203,7 +219,7 @@ export default function App() {
               className={filter === null ? 'chip on' : 'chip'}
               onClick={() => setFilter(null)}
             >
-              All
+              {t('all', lang)}
             </button>
             {present.map(c => (
               <button
@@ -212,7 +228,7 @@ export default function App() {
                 style={{ '--chip': CATEGORIES[c].color }}
                 onClick={() => setFilter(filter === c ? null : c)}
               >
-                {CATEGORIES[c].label}
+                {categoryLabel(c, lang)}
               </button>
             ))}
           </div>
@@ -222,12 +238,8 @@ export default function App() {
           {listed.length === 0 ? (
             searching ? (
               <div className="empty">
-                <p>Nothing on the map matches that yet.</p>
-                <p>
-                  {search.task
-                    ? 'This kind of place has not been recorded on the map yet. Ask at the main gate.'
-                    : 'Try a shorter word, or describe what you need to do instead of the building name.'}
-                </p>
+                <p>{t('noMatch', lang)}</p>
+                <p>{search.task ? t('taskNotMapped', lang) : t('noMatchHelp', lang)}</p>
               </div>
             ) : (
               <div className="empty">
@@ -249,11 +261,11 @@ export default function App() {
                 >
                   <span className="swatch" style={{ background: colorFor(p.category) }} />
                   <span className="rowtext">
-                    <strong>{p.name}</strong>
+                    <strong>{placeName(p, lang)}</strong>
                     <em>
-                      {labelFor(p.category)}
+                      {categoryLabel(p.category, lang)}
                       {away !== null && ` · ${formatDistance(away)}`}
-                      {p.confidence !== 'confirmed' && ' · unverified'}
+                      {p.confidence !== 'confirmed' && ` · ${t('unverified', lang)}`}
                     </em>
                   </span>
                 </button>
@@ -268,44 +280,41 @@ export default function App() {
           <button className="close" onClick={() => setSelected(null)} aria-label="Close">
             &times;
           </button>
-          <h2>{selected.name}</h2>
+          <h2>{placeName(selected, lang)}</h2>
           <p className="meta">
-            {labelFor(selected.category)}
-            {position && ` · ${walkTime(distance(position, selected))}`}
+            {categoryLabel(selected.category, lang)}
+            {position && ` · ${walkTime(distance(position, selected), lang)}`}
           </p>
-          {selected.notes && <p className="notes">{selected.notes}</p>}
+          {placeNotes(selected, lang) && <p className="notes">{placeNotes(selected, lang)}</p>}
           {selected.aliases?.length > 0 && (
-            <p className="aliases">Also called {selected.aliases.join(', ')}</p>
+            <p className="aliases">{t('alsoCalled', lang)} {selected.aliases.join(', ')}</p>
           )}
           {position ? (
             <button
               className={routing ? 'ghost route' : 'primary route'}
               onClick={() => setRouting(!routing)}
             >
-              {routing ? 'Hide directions' : 'Walk me there'}
+              {routing ? t('hideRoute', lang) : t('walkThere', lang)}
             </button>
           ) : (
-            <p className="hintline">Turn on location to get walking directions.</p>
+            <p className="hintline">{t('needLocation', lang)}</p>
           )}
 
           {walk && (
             <p className="routeinfo">
-              {formatDistance(walk.metres)} · {walkTime(walk.metres)}
-              {walk.direct && ' · straight line only, no path mapped here yet'}
+              {formatDistance(walk.metres)} · {walkTime(walk.metres, lang)}
+              {walk.direct && ` · ${t('straightLine', lang)}`}
               {!walk.direct && walk.offNetwork > 60 &&
                 ` · roughly ${walk.offNetwork} m of this is off the traced paths`}
             </p>
           )}
 
           {selected.confidence !== 'confirmed' && (
-            <p className="warn">
-              This location has not been verified yet. Ask someone nearby if it
-              does not look right.
-            </p>
+            <p className="warn">{t('unverifiedWarn', lang)}</p>
           )}
 
           <a className="fix" href={reportUrl(selected)} target="_blank" rel="noreferrer">
-            Something wrong here? Tell us
+            {t('report', lang)}
           </a>
         </div>
       )}

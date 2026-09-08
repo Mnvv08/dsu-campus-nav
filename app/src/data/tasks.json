@@ -1,86 +1,495 @@
 [
   {
     "id": "fees",
-    "question": "Where do I pay fees?",
-    "keywords": ["fees", "fee", "payment", "pay", "cash", "accounts", "finance"],
     "category": "admin",
-    "answer": "Fee payment is handled by the accounts section in the administration area."
+    "question": {
+      "en": "Where do I pay fees?",
+      "kn": "ಶುಲ್ಕ ಎಲ್ಲಿ ಕಟ್ಟಬೇಕು?",
+      "hi": "फीस कहाँ जमा करें?"
+    },
+    "answer": {
+      "en": "Fee payment is handled by the accounts section in the administration area.",
+      "kn": "ಶುಲ್ಕ ಪಾವತಿಯನ್ನು ಆಡಳಿತ ವಿಭಾಗದ ಲೆಕ್ಕ ವಿಭಾಗ ನಿರ್ವಹಿಸುತ್ತದೆ.",
+      "hi": "फीस भुगतान प्रशासनिक क्षेत्र के लेखा विभाग में होता है।"
+    },
+    "keywords": {
+      "en": [
+        "fees",
+        "fee",
+        "payment",
+        "pay",
+        "cash",
+        "accounts",
+        "finance"
+      ],
+      "kn": [
+        "ಶುಲ್ಕ",
+        "ಫೀಸ್",
+        "ಪಾವತಿ",
+        "ಹಣ"
+      ],
+      "hi": [
+        "फीस",
+        "शुल्क",
+        "भुगतान",
+        "जमा"
+      ]
+    }
   },
   {
     "id": "admission",
-    "question": "Where is the admission office?",
-    "keywords": ["admission", "admissions", "counselling", "counseling", "enroll", "enrolment", "documents", "verification"],
     "category": "admin",
-    "answer": "Admissions and document verification happen in the administration area."
+    "question": {
+      "en": "Where is the admission office?",
+      "kn": "ಪ್ರವೇಶ ಕಚೇರಿ ಎಲ್ಲಿದೆ?",
+      "hi": "प्रवेश कार्यालय कहाँ है?"
+    },
+    "answer": {
+      "en": "Admissions and document verification happen in the administration area.",
+      "kn": "ಪ್ರವೇಶ ಮತ್ತು ದಾಖಲೆ ಪರಿಶೀಲನೆ ಆಡಳಿತ ವಿಭಾಗದಲ್ಲಿ ನಡೆಯುತ್ತದೆ.",
+      "hi": "प्रवेश और दस्तावेज़ जाँच प्रशासनिक क्षेत्र में होती है।"
+    },
+    "keywords": {
+      "en": [
+        "admission",
+        "admissions",
+        "counselling",
+        "counseling",
+        "enroll",
+        "enrolment",
+        "documents",
+        "verification"
+      ],
+      "kn": [
+        "ಪ್ರವೇಶ",
+        "ದಾಖಲೆ",
+        "ಅಡ್ಮಿಷನ್"
+      ],
+      "hi": [
+        "प्रवेश",
+        "दाखिला",
+        "दस्तावेज़",
+        "एडमिशन"
+      ]
+    }
   },
   {
     "id": "idcard",
-    "question": "Where do I get my ID card?",
-    "keywords": ["id", "idcard", "card", "identity", "photo"],
     "category": "admin",
-    "answer": "ID cards are issued from the administration area."
+    "question": {
+      "en": "Where do I get my ID card?",
+      "kn": "ಗುರುತಿನ ಚೀಟಿ ಎಲ್ಲಿ ಸಿಗುತ್ತದೆ?",
+      "hi": "आईडी कार्ड कहाँ मिलेगा?"
+    },
+    "answer": {
+      "en": "ID cards are issued from the administration area.",
+      "kn": "ಗುರುತಿನ ಚೀಟಿಯನ್ನು ಆಡಳಿತ ವಿಭಾಗದಿಂದ ನೀಡಲಾಗುತ್ತದೆ.",
+      "hi": "आईडी कार्ड प्रशासनिक क्षेत्र से जारी होते हैं।"
+    },
+    "keywords": {
+      "en": [
+        "id",
+        "idcard",
+        "card",
+        "identity",
+        "photo"
+      ],
+      "kn": [
+        "ಗುರುತಿನ",
+        "ಚೀಟಿ",
+        "ಐಡಿ"
+      ],
+      "hi": [
+        "आईडी",
+        "पहचान",
+        "कार्ड"
+      ]
+    }
   },
   {
     "id": "eat",
-    "question": "Where can I eat?",
-    "keywords": ["eat", "food", "canteen", "cafeteria", "mess", "lunch", "breakfast", "dinner", "hungry", "tea", "coffee", "snacks"],
     "category": "food",
-    "answer": "Canteens on this campus are spread out. Check the walking time before you set off between classes."
+    "question": {
+      "en": "Where can I eat?",
+      "kn": "ಊಟ ಎಲ್ಲಿ ಸಿಗುತ್ತದೆ?",
+      "hi": "खाना कहाँ मिलेगा?"
+    },
+    "answer": {
+      "en": "Canteens on this campus are spread out. Check the walking time before you set off between classes.",
+      "kn": "ಈ ಕ್ಯಾಂಪಸ್‌ನಲ್ಲಿ ಕ್ಯಾಂಟೀನ್‌ಗಳು ದೂರ ದೂರ ಇವೆ. ತರಗತಿಗಳ ನಡುವೆ ಹೊರಡುವ ಮುನ್ನ ನಡಿಗೆಯ ಸಮಯ ನೋಡಿ.",
+      "hi": "इस परिसर में कैंटीन दूर-दूर हैं। कक्षाओं के बीच निकलने से पहले पैदल समय देख लें।"
+    },
+    "keywords": {
+      "en": [
+        "eat",
+        "food",
+        "canteen",
+        "cafeteria",
+        "mess",
+        "lunch",
+        "breakfast",
+        "dinner",
+        "hungry",
+        "tea",
+        "coffee",
+        "snacks"
+      ],
+      "kn": [
+        "ಊಟ",
+        "ಕ್ಯಾಂಟೀನ್",
+        "ತಿಂಡಿ",
+        "ಹಸಿವು",
+        "ಚಹಾ",
+        "ಕಾಫಿ",
+        "ಮೆಸ್"
+      ],
+      "hi": [
+        "खाना",
+        "कैंटीन",
+        "भोजन",
+        "नाश्ता",
+        "भूख",
+        "चाय",
+        "मेस"
+      ]
+    }
   },
   {
     "id": "hostel",
-    "question": "Where is my hostel?",
-    "keywords": ["hostel", "room", "residence", "residences", "accommodation", "warden", "stay"],
     "category": "hostel",
-    "answer": "Student accommodation on this campus is branded S' Residences."
+    "question": {
+      "en": "Where is my hostel?",
+      "kn": "ನನ್ನ ಹಾಸ್ಟೆಲ್ ಎಲ್ಲಿದೆ?",
+      "hi": "मेरा छात्रावास कहाँ है?"
+    },
+    "answer": {
+      "en": "Student accommodation on this campus is branded S' Residences.",
+      "kn": "ಈ ಕ್ಯಾಂಪಸ್‌ನ ವಿದ್ಯಾರ್ಥಿ ವಸತಿಗೆ S' Residences ಎಂದು ಹೆಸರು.",
+      "hi": "इस परिसर के छात्र आवास का नाम S' Residences है।"
+    },
+    "keywords": {
+      "en": [
+        "hostel",
+        "room",
+        "residence",
+        "residences",
+        "accommodation",
+        "warden",
+        "stay"
+      ],
+      "kn": [
+        "ಹಾಸ್ಟೆಲ್",
+        "ವಸತಿ",
+        "ಕೊಠಡಿ",
+        "ರೂಮ್"
+      ],
+      "hi": [
+        "छात्रावास",
+        "हॉस्टल",
+        "कमरा",
+        "आवास"
+      ]
+    }
   },
   {
     "id": "library",
-    "question": "Where is the library?",
-    "keywords": ["library", "books", "study", "reading", "borrow", "journals"],
     "category": "library",
-    "answer": "The central library holds around 37,000 titles and has digital access terminals."
+    "question": {
+      "en": "Where is the library?",
+      "kn": "ಗ್ರಂಥಾಲಯ ಎಲ್ಲಿದೆ?",
+      "hi": "पुस्तकालय कहाँ है?"
+    },
+    "answer": {
+      "en": "The central library holds around 37,000 titles and has digital access terminals.",
+      "kn": "ಕೇಂದ್ರ ಗ್ರಂಥಾಲಯದಲ್ಲಿ ಸುಮಾರು 37,000 ಶೀರ್ಷಿಕೆಗಳು ಮತ್ತು ಡಿಜಿಟಲ್ ಸೌಲಭ್ಯ ಇದೆ.",
+      "hi": "केंद्रीय पुस्तकालय में लगभग 37,000 पुस्तकें और डिजिटल सुविधा है।"
+    },
+    "keywords": {
+      "en": [
+        "library",
+        "books",
+        "study",
+        "reading",
+        "borrow",
+        "journals"
+      ],
+      "kn": [
+        "ಗ್ರಂಥಾಲಯ",
+        "ಲೈಬ್ರರಿ",
+        "ಪುಸ್ತಕ",
+        "ಓದು"
+      ],
+      "hi": [
+        "पुस्तकालय",
+        "लाइब्रेरी",
+        "किताब",
+        "पढ़ाई"
+      ]
+    }
   },
   {
     "id": "class",
-    "question": "Where is my class?",
-    "keywords": ["class", "classroom", "lecture", "block", "department", "school", "lab", "laboratory", "exam", "seminar"],
     "category": "academic",
-    "answer": "Teaching happens across several academic blocks. Check your timetable for the block name, then search it here."
+    "question": {
+      "en": "Where is my class?",
+      "kn": "ನನ್ನ ತರಗತಿ ಎಲ್ಲಿದೆ?",
+      "hi": "मेरी कक्षा कहाँ है?"
+    },
+    "answer": {
+      "en": "Teaching happens across several academic blocks. Check your timetable for the block name, then search it here.",
+      "kn": "ಪಾಠಗಳು ಹಲವು ಶೈಕ್ಷಣಿಕ ಬ್ಲಾಕ್‌ಗಳಲ್ಲಿ ನಡೆಯುತ್ತವೆ. ವೇಳಾಪಟ್ಟಿಯಲ್ಲಿ ಬ್ಲಾಕ್ ಹೆಸರು ನೋಡಿ ಇಲ್ಲಿ ಹುಡುಕಿ.",
+      "hi": "पढ़ाई कई शैक्षणिक ब्लॉकों में होती है। समय-सारणी में ब्लॉक का नाम देखकर यहाँ खोजें।"
+    },
+    "keywords": {
+      "en": [
+        "class",
+        "classroom",
+        "lecture",
+        "block",
+        "department",
+        "school",
+        "lab",
+        "laboratory",
+        "exam",
+        "seminar"
+      ],
+      "kn": [
+        "ತರಗತಿ",
+        "ಕ್ಲಾಸ್",
+        "ಬ್ಲಾಕ್",
+        "ಪ್ರಯೋಗಾಲಯ",
+        "ಲ್ಯಾಬ್",
+        "ಪರೀಕ್ಷೆ"
+      ],
+      "hi": [
+        "कक्षा",
+        "क्लास",
+        "ब्लॉक",
+        "प्रयोगशाला",
+        "लैब",
+        "परीक्षा"
+      ]
+    }
   },
   {
     "id": "doctor",
-    "question": "I need a doctor",
-    "keywords": ["doctor", "hospital", "medical", "clinic", "sick", "ill", "injury", "injured", "emergency", "pharmacy", "medicine", "first", "aid"],
     "category": "medical",
-    "answer": "CDSIMER, the campus hospital, has over 450 beds. In an emergency, call campus security first rather than walking."
+    "question": {
+      "en": "I need a doctor",
+      "kn": "ವೈದ್ಯರ ಅಗತ್ಯವಿದೆ",
+      "hi": "मुझे डॉक्टर चाहिए"
+    },
+    "answer": {
+      "en": "CDSIMER, the campus hospital, has over 450 beds. In an emergency, call campus security first rather than walking.",
+      "kn": "ಕ್ಯಾಂಪಸ್ ಆಸ್ಪತ್ರೆ CDSIMER ನಲ್ಲಿ 450ಕ್ಕೂ ಹೆಚ್ಚು ಹಾಸಿಗೆಗಳಿವೆ. ತುರ್ತು ಸಂದರ್ಭದಲ್ಲಿ ನಡೆಯುವ ಬದಲು ಮೊದಲು ಭದ್ರತಾ ಸಿಬ್ಬಂದಿಗೆ ಕರೆ ಮಾಡಿ.",
+      "hi": "परिसर अस्पताल CDSIMER में 450 से अधिक बिस्तर हैं। आपात स्थिति में पैदल जाने के बजाय पहले सुरक्षा को कॉल करें।"
+    },
+    "keywords": {
+      "en": [
+        "doctor",
+        "hospital",
+        "medical",
+        "clinic",
+        "sick",
+        "ill",
+        "injury",
+        "injured",
+        "emergency",
+        "pharmacy",
+        "medicine",
+        "first",
+        "aid"
+      ],
+      "kn": [
+        "ವೈದ್ಯ",
+        "ಡಾಕ್ಟರ್",
+        "ಆಸ್ಪತ್ರೆ",
+        "ಔಷಧ",
+        "ಗಾಯ",
+        "ತುರ್ತು"
+      ],
+      "hi": [
+        "डॉक्टर",
+        "अस्पताल",
+        "दवा",
+        "चोट",
+        "बीमार",
+        "आपात"
+      ]
+    }
   },
   {
     "id": "bus",
-    "question": "Where do I catch the bus?",
-    "keywords": ["bus", "transport", "shuttle", "drop", "pickup", "leave", "home", "city", "bmtc", "ksrtc", "cab", "auto"],
     "category": "transport",
-    "answer": "The campus sits well outside the city, so university buses matter. Check timings with the transport office in advance."
+    "question": {
+      "en": "Where do I catch the bus?",
+      "kn": "ಬಸ್ ಎಲ್ಲಿ ಹಿಡಿಯಬೇಕು?",
+      "hi": "बस कहाँ से मिलेगी?"
+    },
+    "answer": {
+      "en": "The campus sits well outside the city, so university buses matter. Check timings with the transport office in advance.",
+      "kn": "ಕ್ಯಾಂಪಸ್ ನಗರದಿಂದ ಬಹಳ ದೂರ ಇದೆ, ಹಾಗಾಗಿ ವಿಶ್ವವಿದ್ಯಾಲಯದ ಬಸ್‌ಗಳು ಮುಖ್ಯ. ಸಮಯವನ್ನು ಮೊದಲೇ ಸಾರಿಗೆ ಕಚೇರಿಯಲ್ಲಿ ಕೇಳಿ.",
+      "hi": "परिसर शहर से काफ़ी दूर है, इसलिए विश्वविद्यालय की बसें ज़रूरी हैं। समय पहले से परिवहन कार्यालय से पूछ लें।"
+    },
+    "keywords": {
+      "en": [
+        "bus",
+        "transport",
+        "shuttle",
+        "drop",
+        "pickup",
+        "leave",
+        "home",
+        "city",
+        "bmtc",
+        "ksrtc",
+        "cab",
+        "auto"
+      ],
+      "kn": [
+        "ಬಸ್",
+        "ಸಾರಿಗೆ",
+        "ಆಟೋ",
+        "ಕ್ಯಾಬ್",
+        "ಮನೆ"
+      ],
+      "hi": [
+        "बस",
+        "परिवहन",
+        "ऑटो",
+        "कैब",
+        "घर"
+      ]
+    }
   },
   {
     "id": "money",
-    "question": "Where is an ATM?",
-    "keywords": ["atm", "money", "cash", "bank", "withdraw", "xerox", "print", "printout", "stationery", "photocopy"],
     "category": "utility",
-    "answer": "Amenities like ATMs and stationery counters are limited on campus. Plan ahead."
+    "question": {
+      "en": "Where is an ATM?",
+      "kn": "ಎಟಿಎಂ ಎಲ್ಲಿದೆ?",
+      "hi": "एटीएम कहाँ है?"
+    },
+    "answer": {
+      "en": "Amenities like ATMs and stationery counters are limited on campus. Plan ahead.",
+      "kn": "ಎಟಿಎಂ, ಸ್ಟೇಷನರಿಯಂತಹ ಸೌಲಭ್ಯಗಳು ಕ್ಯಾಂಪಸ್‌ನಲ್ಲಿ ಕಡಿಮೆ. ಮೊದಲೇ ಯೋಜಿಸಿ.",
+      "hi": "एटीएम और स्टेशनरी जैसी सुविधाएँ परिसर में सीमित हैं। पहले से योजना बनाएँ।"
+    },
+    "keywords": {
+      "en": [
+        "atm",
+        "money",
+        "cash",
+        "bank",
+        "withdraw",
+        "xerox",
+        "print",
+        "printout",
+        "stationery",
+        "photocopy"
+      ],
+      "kn": [
+        "ಎಟಿಎಂ",
+        "ಹಣ",
+        "ಬ್ಯಾಂಕ್",
+        "ಜೆರಾಕ್ಸ್",
+        "ಪ್ರಿಂಟ್"
+      ],
+      "hi": [
+        "एटीएम",
+        "पैसा",
+        "बैंक",
+        "ज़ेरॉक्स",
+        "प्रिंट"
+      ]
+    }
   },
   {
     "id": "sports",
-    "question": "Where can I play?",
-    "keywords": ["sports", "play", "ground", "gym", "fitness", "football", "cricket", "basketball", "tennis", "badminton", "squash", "track", "run"],
     "category": "sports",
-    "answer": "Facilities include a football turf with an athletic running track, a cricket ground, and several courts."
+    "question": {
+      "en": "Where can I play?",
+      "kn": "ಆಟ ಎಲ್ಲಿ ಆಡಬಹುದು?",
+      "hi": "खेल कहाँ खेल सकते हैं?"
+    },
+    "answer": {
+      "en": "Facilities include a football turf with an athletic running track, a cricket ground, and several courts.",
+      "kn": "ಅಥ್ಲೆಟಿಕ್ ಟ್ರ್ಯಾಕ್ ಸಹಿತ ಫುಟ್‌ಬಾಲ್ ಟರ್ಫ್, ಕ್ರಿಕೆಟ್ ಮೈದಾನ ಮತ್ತು ಹಲವು ಅಂಕಣಗಳಿವೆ.",
+      "hi": "यहाँ एथलेटिक ट्रैक सहित फ़ुटबॉल टर्फ, क्रिकेट मैदान और कई कोर्ट हैं।"
+    },
+    "keywords": {
+      "en": [
+        "sports",
+        "play",
+        "ground",
+        "gym",
+        "fitness",
+        "football",
+        "cricket",
+        "basketball",
+        "tennis",
+        "badminton",
+        "squash",
+        "track",
+        "run"
+      ],
+      "kn": [
+        "ಆಟ",
+        "ಕ್ರೀಡೆ",
+        "ಮೈದಾನ",
+        "ಜಿಮ್",
+        "ಕ್ರಿಕೆಟ್",
+        "ಫುಟ್‌ಬಾಲ್"
+      ],
+      "hi": [
+        "खेल",
+        "मैदान",
+        "जिम",
+        "क्रिकेट",
+        "फ़ुटबॉल"
+      ]
+    }
   },
   {
     "id": "entry",
-    "question": "How do I get in?",
-    "keywords": ["gate", "entrance", "entry", "security", "visitor", "guest", "parking", "park", "car", "bike"],
     "category": "gate",
-    "answer": "Visitors normally sign in at the main gate on Kanakapura Road."
+    "question": {
+      "en": "How do I get in?",
+      "kn": "ಒಳಗೆ ಹೇಗೆ ಹೋಗುವುದು?",
+      "hi": "अंदर कैसे जाएँ?"
+    },
+    "answer": {
+      "en": "Visitors normally sign in at the main gate on Kanakapura Road.",
+      "kn": "ಸಂದರ್ಶಕರು ಸಾಮಾನ್ಯವಾಗಿ ಕನಕಪುರ ರಸ್ತೆಯ ಮುಖ್ಯ ಗೇಟ್‌ನಲ್ಲಿ ನೋಂದಾಯಿಸಬೇಕು.",
+      "hi": "आगंतुक आमतौर पर कनकपुरा रोड के मुख्य द्वार पर पंजीकरण करते हैं।"
+    },
+    "keywords": {
+      "en": [
+        "gate",
+        "entrance",
+        "entry",
+        "security",
+        "visitor",
+        "guest",
+        "parking",
+        "park",
+        "car",
+        "bike"
+      ],
+      "kn": [
+        "ಗೇಟ್",
+        "ಪ್ರವೇಶದ್ವಾರ",
+        "ಭದ್ರತೆ",
+        "ಪಾರ್ಕಿಂಗ್",
+        "ಸಂದರ್ಶಕ"
+      ],
+      "hi": [
+        "द्वार",
+        "गेट",
+        "सुरक्षा",
+        "पार्किंग",
+        "आगंतुक"
+      ]
+    }
   }
 ]
