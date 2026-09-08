@@ -75,6 +75,26 @@ function fieldHit(qToken, text) {
   return 0;
 }
 
+// Departments, labs and offices inside a building. A five-storey block
+// is one point on the map but a dozen destinations to the person
+// standing outside it.
+function unitHits(qTokens, place, lang) {
+  const hits = [];
+  for (const u of place.units ?? []) {
+    let score = 0;
+    for (const qt of qTokens) {
+      score += fieldHit(qt, u.name) * 10;
+      for (const code of ['kn', 'hi']) {
+        if (u[`name_${code}`]) score += fieldHit(qt, u[`name_${code}`]) * 10;
+      }
+      for (const a of u.aliases ?? []) score += fieldHit(qt, a) * 8;
+      if (u.notes) score += fieldHit(qt, u.notes) * 2;
+    }
+    if (score > 1) hits.push({ unit: u, score });
+  }
+  return hits;
+}
+
 export function searchPlaces(query, places, tasks, lang = 'en') {
   const qTokens = tokens(query).filter(t => !STOP.has(t));
   if (qTokens.length === 0) return { results: [], task: null };
@@ -87,7 +107,9 @@ export function searchPlaces(query, places, tasks, lang = 'en') {
     )
   ) ?? null;
 
-  const scored = places.map(p => {
+  const scored = [];
+
+  for (const p of places) {
     let score = 0;
 
     for (const qt of qTokens) {
@@ -109,14 +131,18 @@ export function searchPlaces(query, places, tasks, lang = 'en') {
     // mode this app most needs to avoid.
     if (score > 0 && p.confidence === 'confirmed') score += 0.5;
 
-    return { place: p, score };
-  });
+    // A named department is a more specific answer than the building
+    // containing it, so matched units outrank a bare building match.
+    const units = unitHits(qTokens, p, lang);
+    for (const u of units) {
+      scored.push({ place: p, unit: u.unit, score: u.score + 4 });
+    }
+
+    if (score > 1) scored.push({ place: p, unit: null, score });
+  }
 
   return {
-    results: scored
-      .filter(s => s.score > 1)
-      .sort((a, b) => b.score - a.score)
-      .map(s => s.place),
+    results: scored.sort((a, b) => b.score - a.score),
     task
   };
 }

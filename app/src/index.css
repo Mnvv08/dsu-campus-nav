@@ -249,3 +249,10 @@ button:focus-visible, .row:focus-visible { outline: 2px solid var(--live); outli
   background: none; color: var(--muted); border: 1px solid var(--line); border-radius: 6px;
 }
 .anchor button:hover { color: var(--text); border-color: var(--live); }
+
+.units { margin-top: 16px; border-top: 1px solid var(--line); padding-top: 14px; }
+.units h3 { margin: 0 0 10px; font-size: 12px; font-weight: 500; color: var(--muted); }
+.floor { display: flex; gap: 12px; margin-bottom: 9px; }
+.floorname { flex: none; width: 82px; color: var(--live); font-size: 12px; padding-top: 2px; }
+.floor ul { margin: 0; padding: 0; list-style: none; }
+.floor li { font-size: 13px; margin-bottom: 3px; }

@@ -93,6 +93,9 @@ const UI = {
     kn: 'ಈ ಬ್ರೌಸರ್ ನಿಮ್ಮ ಸ್ಥಳವನ್ನು ಹಂಚಲು ಸಾಧ್ಯವಿಲ್ಲ.',
     hi: 'यह ब्राउज़र आपकी लोकेशन साझा नहीं कर सकता।'
   },
+  floor: { en: 'Floor', kn: 'ಮಹಡಿ', hi: 'मंज़िल' },
+  ground: { en: 'Ground floor', kn: 'ನೆಲ ಮಹಡಿ', hi: 'भूतल' },
+  inside: { en: 'Inside this building', kn: 'ಈ ಕಟ್ಟಡದ ಒಳಗೆ', hi: 'इस इमारत के अंदर' },
   youAreAt: {
     en: 'You scanned the sign at',
     kn: 'ನೀವು ಸ್ಕ್ಯಾನ್ ಮಾಡಿದ ಫಲಕ:',
@@ -135,6 +138,12 @@ export const placeNotes = (place, lang) =>
 // Task text is authored per language in tasks.json.
 export const taskText = (task, field, lang) =>
   task[field]?.[lang] ?? task[field]?.en ?? '';
+
+// Floors are ordered ground, 1, 2 … and labelled per language.
+export function floorLabel(n, lang) {
+  if (n === 0 || n === undefined || n === null) return t('ground', lang);
+  return `${t('floor', lang)} ${n}`;
+}
 
 export function detectLanguage() {
   const saved = localStorage.getItem('dsu-lang');

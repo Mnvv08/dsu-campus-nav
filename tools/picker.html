@@ -60,7 +60,8 @@
     border:1px solid var(--line);border-radius:6px;
     font:inherit;font-size:14px;
   }
-  textarea{resize:vertical;min-height:56px}
+  textarea{resize:vertical;min-height:56px;font-size:13px}
+  label small{display:block;margin-top:5px;color:var(--muted);font-size:11px}
   input:focus,select:focus,textarea:focus{outline:2px solid var(--live);outline-offset:-1px;border-color:transparent}
   .row{display:flex;gap:10px}
   .row label{flex:1}
@@ -158,6 +159,13 @@
     </div>
 
     <label>
+      <span>Inside this building (one per line)</span>
+      <textarea id="units" rows="4"
+        placeholder="3 | Computer Science Department | CSE, comp sci&#10;1 | Mechanical Department | Mech&#10;0 | Physics Lab"></textarea>
+      <small>floor | name | other names. Use 0 for ground floor.</small>
+    </label>
+
+    <label>
       <span>What happens here</span>
       <textarea id="notes" placeholder="Fee payment, ID cards, and document submission for new students."></textarea>
     </label>
@@ -234,6 +242,7 @@ $('form').addEventListener('submit', ev => {
     category: $('category').value,
     confidence: $('confidence').value,
     notes: $('notes').value.trim(),
+    ...(parseUnits($('units').value).length && { units: parseUnits($('units').value) }),
     lat: +pending.lat.toFixed(6),
     lng: +pending.lng.toFixed(6)
   };
@@ -249,6 +258,21 @@ $('form').addEventListener('submit', ev => {
   $('hint').textContent = 'Saved. Click the map to add the next place.';
   render();
 });
+
+// One line per unit: "floor | name | alias, alias". Everything after the
+// name is optional, so "3 | CSE Department" is a valid line.
+function parseUnits(text){
+  return text.split('\n').map(line => {
+    const parts = line.split('|').map(x => x.trim());
+    if (parts.length < 2 || !parts[1]) return null;
+    const floor = Number(parts[0]);
+    return {
+      name: parts[1],
+      floor: Number.isFinite(floor) ? floor : 0,
+      ...(parts[2] && { aliases: parts[2].split(',').map(a => a.trim()).filter(Boolean) })
+    };
+  }).filter(Boolean);
+}
 
 function slug(s){
   return s.toLowerCase().trim().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');
@@ -282,9 +306,10 @@ function render(){
   places.forEach((p, i) => {
     const row = document.createElement('div');
     row.className = 'item';
+    const inside = p.units?.length ? ` · ${p.units.length} inside` : '';
     row.innerHTML =
       `<div><strong>${escapeHtml(p.name)}</strong>
-       <em>${p.category} · ${p.confidence}</em></div>`;
+       <em>${p.category} · ${p.confidence}${inside}</em></div>`;
 
     row.addEventListener('click', () => {
       map.setView([p.lat, p.lng], 19);

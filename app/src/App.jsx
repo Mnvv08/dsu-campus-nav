@@ -6,9 +6,21 @@ import pathData from './data/paths.json';
 import { searchPlaces } from './lib/search';
 import { buildGraph, route } from './lib/route';
 import { CATEGORIES, colorFor, distance, walkTime, formatDistance } from './lib/categories';
-import { LANGUAGES, t, categoryLabel, placeName, placeNotes, taskText, detectLanguage } from './lib/i18n';
+import { LANGUAGES, t, categoryLabel, placeName, placeNotes, taskText, detectLanguage, floorLabel } from './lib/i18n';
 
 const REPO = 'https://github.com/Mnvv08/dsu-campus-nav';
+
+// Ground floor first, then upwards. Sorting numerically matters once a
+// building has more than nine floors.
+function groupByFloor(units) {
+  const map = new Map();
+  for (const u of units) {
+    const f = u.floor ?? 0;
+    if (!map.has(f)) map.set(f, []);
+    map.get(f).push(u);
+  }
+  return [...map.entries()].sort((a, b) => a[0] - b[0]);
+}
 
 // Corrections go to GitHub Issues. No backend, no moderation queue, and
 // every report is public and attributable — which is what keeps a
@@ -73,14 +85,23 @@ export default function App() {
   const searching = query.trim().length > 0;
 
   const visible = useMemo(() => {
-    if (searching) return search.results;
+    if (searching) {
+      // Several units can share a building; the map wants each pin once.
+      const seen = new Set();
+      return search.results
+        .filter(r => !seen.has(r.place.id) && seen.add(r.place.id))
+        .map(r => r.place);
+    }
     return filter ? places.filter(p => p.category === filter) : places;
   }, [searching, search.results, places, filter]);
 
   const listed = useMemo(() => {
-    if (!origin) return visible;
-    return [...visible].sort((a, b) => distance(origin, a) - distance(origin, b));
-  }, [visible, origin]);
+    // While searching, relevance ordering wins; browsing sorts by distance.
+    if (searching) return search.results;
+    const rows = visible.map(p => ({ place: p, unit: null }));
+    if (!origin) return rows;
+    return rows.sort((a, b) => distance(origin, a.place) - distance(origin, b.place));
+  }, [searching, search.results, visible, origin]);
 
   // Only offer prompts we can actually answer from the current dataset.
   const suggestions = useMemo(() => {
@@ -273,19 +294,21 @@ export default function App() {
               </div>
             )
           ) : (
-            listed.map(p => {
+            listed.map(({ place: p, unit }) => {
               const away = origin ? distance(origin, p) : null;
               return (
                 <button
-                  key={p.id}
+                  key={unit ? `${p.id}:${unit.name}` : p.id}
                   className={selected?.id === p.id ? 'row on' : 'row'}
                   onClick={() => select(p)}
                 >
                   <span className="swatch" style={{ background: colorFor(p.category) }} />
                   <span className="rowtext">
-                    <strong>{placeName(p, lang)}</strong>
+                    <strong>{unit ? placeName(unit, lang) : placeName(p, lang)}</strong>
                     <em>
-                      {categoryLabel(p.category, lang)}
+                      {unit
+                        ? `${placeName(p, lang)} · ${floorLabel(unit.floor, lang)}`
+                        : categoryLabel(p.category, lang)}
                       {away !== null && ` · ${formatDistance(away)}`}
                       {p.confidence !== 'confirmed' && ` · ${t('unverified', lang)}`}
                     </em>
@@ -308,6 +331,22 @@ export default function App() {
             {origin && ` · ${walkTime(distance(origin, selected), lang)}`}
           </p>
           {placeNotes(selected, lang) && <p className="notes">{placeNotes(selected, lang)}</p>}
+          {selected.units?.length > 0 && (
+            <div className="units">
+              <h3>{t('inside', lang)}</h3>
+              {groupByFloor(selected.units).map(([floor, items]) => (
+                <div key={floor} className="floor">
+                  <span className="floorname">{floorLabel(Number(floor), lang)}</span>
+                  <ul>
+                    {items.map(u => (
+                      <li key={u.name}>{placeName(u, lang)}</li>
+                    ))}
+                  </ul>
+                </div>
+              ))}
+            </div>
+          )}
+
           {selected.aliases?.length > 0 && (
             <p className="aliases">{t('alsoCalled', lang)} {selected.aliases.join(', ')}</p>
           )}
