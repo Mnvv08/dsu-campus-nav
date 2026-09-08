@@ -93,6 +93,12 @@ const UI = {
     kn: 'ಈ ಬ್ರೌಸರ್ ನಿಮ್ಮ ಸ್ಥಳವನ್ನು ಹಂಚಲು ಸಾಧ್ಯವಿಲ್ಲ.',
     hi: 'यह ब्राउज़र आपकी लोकेशन साझा नहीं कर सकता।'
   },
+  avoidSteps: { en: 'Avoid stairs', kn: 'ಮೆಟ್ಟಿಲು ತಪ್ಪಿಸಿ', hi: 'सीढ़ियाँ न लें' },
+  noStepFree: {
+    en: 'No step-free route is mapped here yet, so this one uses stairs.',
+    kn: 'ಇಲ್ಲಿ ಮೆಟ್ಟಿಲಿಲ್ಲದ ದಾರಿ ಇನ್ನೂ ಗುರುತಿಸಿಲ್ಲ, ಹಾಗಾಗಿ ಈ ದಾರಿಯಲ್ಲಿ ಮೆಟ್ಟಿಲುಗಳಿವೆ.',
+    hi: 'यहाँ बिना सीढ़ी का रास्ता अभी दर्ज नहीं है, इसलिए इस रास्ते में सीढ़ियाँ हैं।'
+  },
   floor: { en: 'Floor', kn: 'ಮಹಡಿ', hi: 'मंज़िल' },
   ground: { en: 'Ground floor', kn: 'ನೆಲ ಮಹಡಿ', hi: 'भूतल' },
   inside: { en: 'Inside this building', kn: 'ಈ ಕಟ್ಟಡದ ಒಳಗೆ', hi: 'इस इमारत के अंदर' },

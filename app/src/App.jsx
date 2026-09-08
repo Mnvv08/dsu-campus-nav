@@ -71,6 +71,7 @@ export default function App() {
   // anchor stands in for it.
   const origin = position ?? anchor;
   const [routing, setRouting] = useState(false);
+  const [avoidSteps, setAvoidSteps] = useState(false);
 
   const present = useMemo(() => {
     const seen = new Set(places.map(p => p.category));
@@ -157,7 +158,7 @@ export default function App() {
 
   const walk = useMemo(() => {
     if (!routing || !origin || !selected) return null;
-    const r = route(graph, origin, selected);
+    const r = route(graph, origin, selected, { avoidSteps });
     if (r) return r;
     // No usable network here — fall back to a straight line, but say so.
     return {
@@ -165,7 +166,7 @@ export default function App() {
       metres: distance(origin, selected),
       direct: true
     };
-  }, [routing, origin, selected, graph]);
+  }, [routing, origin, selected, graph, avoidSteps]);
 
   // Directions are about one destination; changing it should reset them.
   useEffect(() => { setRouting(false); }, [selected]);
@@ -359,6 +360,21 @@ export default function App() {
             </button>
           ) : (
             <p className="hintline">{t('needLocation', lang)}</p>
+          )}
+
+          {origin && (
+            <label className="stepfree">
+              <input
+                type="checkbox"
+                checked={avoidSteps}
+                onChange={e => setAvoidSteps(e.target.checked)}
+              />
+              {t('avoidSteps', lang)}
+            </label>
+          )}
+
+          {walk?.noStepFreeRoute && (
+            <p className="warn">{t('noStepFree', lang)}</p>
           )}
 
           {walk && (

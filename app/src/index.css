@@ -256,3 +256,10 @@ button:focus-visible, .row:focus-visible { outline: 2px solid var(--live); outli
 .floorname { flex: none; width: 82px; color: var(--live); font-size: 12px; padding-top: 2px; }
 .floor ul { margin: 0; padding: 0; list-style: none; }
 .floor li { font-size: 13px; margin-bottom: 3px; }
+
+.stepfree {
+  display: flex; align-items: center; gap: 8px;
+  margin-top: 12px; color: var(--muted); font-size: 13px; cursor: pointer;
+}
+.stepfree input { accent-color: var(--live); width: 15px; height: 15px; }
+.stepfree:hover { color: var(--text); }

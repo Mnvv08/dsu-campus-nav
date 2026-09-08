@@ -5,8 +5,13 @@ const key = (lat, lng) => `${lat.toFixed(6)},${lng.toFixed(6)}`;
 // Turn the traced polylines into an undirected weighted graph.
 // Vertices shared between paths collapse into one node, which is what
 // makes junctions work — the tracer snaps clicks so this holds.
+// Paths are either a bare array of points (the original format) or an
+// object carrying attributes. Accepting both means old exports keep
+// working rather than silently producing an empty network.
+const normalise = p => (Array.isArray(p) ? { points: p, steps: false } : p);
+
 export function buildGraph(paths) {
-  const nodes = new Map(); // key -> { lat, lng, edges: [{ to, cost }] }
+  const nodes = new Map(); // key -> { lat, lng, edges: [{ to, cost, steps }] }
 
   const add = ([lat, lng]) => {
     const k = key(lat, lng);
@@ -14,14 +19,15 @@ export function buildGraph(paths) {
     return k;
   };
 
-  for (const path of paths) {
-    for (let i = 1; i < path.length; i++) {
-      const a = add(path[i - 1]);
-      const b = add(path[i]);
+  for (const raw of paths) {
+    const { points, steps = false } = normalise(raw);
+    for (let i = 1; i < points.length; i++) {
+      const a = add(points[i - 1]);
+      const b = add(points[i]);
       if (a === b) continue;
       const cost = distance(nodes.get(a), nodes.get(b));
-      nodes.get(a).edges.push({ to: b, cost });
-      nodes.get(b).edges.push({ to: a, cost });
+      nodes.get(a).edges.push({ to: b, cost, steps });
+      nodes.get(b).edges.push({ to: a, cost, steps });
     }
   }
 
@@ -41,7 +47,7 @@ function nearestNode(graph, point) {
 // Dijkstra with a linear scan for the next node. The campus network is
 // a few hundred nodes at most, so a binary heap would be more code for
 // no measurable gain.
-function shortestPath(graph, from, to) {
+function shortestPath(graph, from, to, avoidSteps = false) {
   const dist = new Map([[from, 0]]);
   const prev = new Map();
   const done = new Set();
@@ -58,6 +64,10 @@ function shortestPath(graph, from, to) {
 
     for (const e of graph.get(cur).edges) {
       if (done.has(e.to)) continue;
+      // Excluded outright rather than penalised. A weighted detour would
+      // still route someone up a staircase if the alternative were long
+      // enough, which defeats the point.
+      if (avoidSteps && e.steps) continue;
       const alt = curD + e.cost;
       if (alt < (dist.get(e.to) ?? Infinity)) {
         dist.set(e.to, alt);
@@ -78,7 +88,7 @@ function shortestPath(graph, from, to) {
  * either end — worth surfacing, because a long tail means the route is
  * only partly trustworthy.
  */
-export function route(graph, from, to) {
+export function route(graph, from, to, { avoidSteps = false } = {}) {
   if (!graph || graph.size === 0) return null;
 
   const a = nearestNode(graph, from);
@@ -89,7 +99,15 @@ export function route(graph, from, to) {
   // here to say anything useful.
   if (a.key === b.key) return null;
 
-  const found = shortestPath(graph, a.key, b.key);
+  let found = shortestPath(graph, a.key, b.key, avoidSteps);
+  let noStepFreeRoute = false;
+
+  // Falling back to a route with steps is more useful than a dead end,
+  // but only if the app says clearly which one it gave.
+  if (!found && avoidSteps) {
+    found = shortestPath(graph, a.key, b.key, false);
+    noStepFreeRoute = true;
+  }
   if (!found) return null;
 
   const coords = found.chain.map(k => {
@@ -100,6 +118,7 @@ export function route(graph, from, to) {
   return {
     coords: [[from.lat, from.lng], ...coords, [to.lat, to.lng]],
     metres: found.metres + a.away + b.away,
-    offNetwork: Math.round(a.away + b.away)
+    offNetwork: Math.round(a.away + b.away),
+    noStepFreeRoute
   };
 }

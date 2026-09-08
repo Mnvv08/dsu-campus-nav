@@ -30,6 +30,10 @@
   .live{padding:14px 22px;border-bottom:1px solid var(--line)}
   .live p{margin:0 0 10px;font-size:13px;color:var(--warn)}
   .btns{display:flex;gap:8px}
+  .kind{display:flex;align-items:center;gap:8px;margin:0 0 11px;
+    color:var(--muted);font-size:13px;cursor:pointer}
+  .kind input{accent-color:var(--warn);width:15px;height:15px}
+  .kind:hover{color:var(--text)}
   button{font:inherit;font-size:14px;padding:9px 13px;border-radius:6px;
     border:1px solid var(--line);background:var(--field);color:var(--text);cursor:pointer}
   button:hover:not(:disabled){border-color:var(--live)}
@@ -67,11 +71,16 @@
     Click along a footpath or road to lay down points. Press <b>Enter</b> to
     finish the path, or <b>Escape</b> to discard it. Ending near an existing
     point snaps to it, which is what turns separate paths into a connected
-    network.
+    network. Tick <b>has steps</b> before finishing a stretch with stairs —
+    those are drawn dashed, and routing can be asked to avoid them.
   </div>
 
   <div class="live">
     <p id="status">No path in progress.</p>
+    <label class="kind">
+      <input type="checkbox" id="steps">
+      This path has steps
+    </label>
     <div class="btns">
       <button id="finish" disabled>Finish path</button>
       <button id="undo" disabled>Undo point</button>
@@ -116,9 +125,11 @@ function metres(a, b){
 
 // Reuse an existing vertex when the click lands close to one, so the
 // exported network is genuinely connected rather than visually adjacent.
+const pointsOf = p => (Array.isArray(p) ? p : p.points);
+
 function snap(ll){
   let best = null, bestD = SNAP_M;
-  for (const p of paths) for (const v of p) {
+  for (const p of paths) for (const v of pointsOf(p)) {
     const d = metres(ll, v);
     if (d < bestD) { bestD = d; best = v; }
   }
@@ -163,8 +174,14 @@ function redrawDraft(){
 
 function finish(){
   if (draft.length < 2) return;
-  paths.push(draft);
-  drawn.push(L.polyline(draft, { color:'#4ee39a', weight:4, opacity:.85 }).addTo(map));
+  const steps = $('steps').checked;
+  paths.push({ points: draft, steps });
+  drawn.push(L.polyline(draft, {
+    color: steps ? '#ff9a6b' : '#4ee39a',
+    weight: 4,
+    opacity: .85,
+    dashArray: steps ? '8 6' : null
+  }).addTo(map));
   draft = [];
   redrawDraft();
   render();
@@ -182,7 +199,7 @@ document.addEventListener('keydown', e => {
 
 function nodeCount(){
   const set = new Set();
-  paths.forEach(p => p.forEach(v => set.add(v[0].toFixed(6) + ',' + v[1].toFixed(6))));
+  paths.forEach(p => pointsOf(p).forEach(v => set.add(v[0].toFixed(6) + ',' + v[1].toFixed(6))));
   return set.size;
 }
 
@@ -198,11 +215,13 @@ function render(){
 
   list.innerHTML = '';
   paths.forEach((p, i) => {
-    const len = Math.round(p.reduce((s, v, j) => j ? s + metres(p[j-1], v) : 0, 0));
+    const pts = pointsOf(p);
+    const len = Math.round(pts.reduce((s, v, j) => j ? s + metres(pts[j-1], v) : 0, 0));
     const row = document.createElement('div');
     row.className = 'item';
-    row.innerHTML = `<span>Path ${i + 1}<em> · ${p.length} points · ${len} m</em></span>`;
-    row.addEventListener('click', () => map.fitBounds(p, { padding:[60,60] }));
+    const tag = p.steps ? ' · steps' : '';
+    row.innerHTML = `<span>Path ${i + 1}<em> · ${pts.length} points · ${len} m${tag}</em></span>`;
+    row.addEventListener('click', () => map.fitBounds(pts, { padding:[60,60] }));
 
     const del = document.createElement('button');
     del.textContent = 'Remove';
@@ -251,10 +270,15 @@ $('file').addEventListener('change', e => {
       drawn.length = 0;
       paths = d.paths || [];
       paths.forEach(p => drawn.push(
-        L.polyline(p, { color:'#4ee39a', weight:4, opacity:.85 }).addTo(map)
+        L.polyline(pointsOf(p), {
+          color: p.steps ? '#ff9a6b' : '#4ee39a',
+          weight: 4,
+          opacity: .85,
+          dashArray: p.steps ? '8 6' : null
+        }).addTo(map)
       ));
       render();
-      if (paths.length) map.fitBounds(paths.flat(), { padding:[60,60] });
+      if (paths.length) map.fitBounds(paths.flatMap(pointsOf), { padding:[60,60] });
     } catch { alert('That file could not be read as paths JSON.'); }
   };
   r.readAsText(f);
