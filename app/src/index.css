@@ -161,3 +161,49 @@ button:focus-visible, .row:focus-visible { outline: 2px solid var(--live); outli
   .panel { width: 100%; flex: 1; border-left: 0; border-top: 1px solid var(--line); min-height: 0; }
   .sheet { left: 12px; right: 12px; bottom: 12px; width: auto; }
 }
+
+/* Search */
+.searchbox { position: relative; padding: 14px 22px 12px; border-bottom: 1px solid var(--line); }
+.searchbox input {
+  width: 100%;
+  padding: 11px 34px 11px 13px;
+  background: var(--field);
+  color: var(--text);
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  font: inherit;
+  font-size: 14px;
+}
+.searchbox input::placeholder { color: var(--muted); }
+.searchbox input:focus { outline: 2px solid var(--live); outline-offset: -1px; border-color: transparent; }
+.clear {
+  position: absolute; right: 30px; top: 50%;
+  transform: translateY(-40%);
+  width: 24px; height: 24px;
+  border: 0; border-radius: 5px;
+  background: none; color: var(--muted);
+  font-size: 18px; line-height: 1;
+}
+.clear:hover { color: var(--text); background: var(--panel); }
+
+.taskanswer {
+  margin: 0;
+  padding: 13px 22px;
+  color: var(--text);
+  font-size: 13px;
+  line-height: 1.55;
+  background: var(--field);
+  border-bottom: 1px solid var(--line);
+  border-left: 2px solid var(--live);
+}
+
+.prompts { display: flex; flex-wrap: wrap; gap: 7px; padding: 14px 22px; border-bottom: 1px solid var(--line); }
+.prompt {
+  padding: 7px 12px;
+  border-radius: 999px;
+  font-size: 13px;
+  background: var(--field);
+  color: var(--muted);
+  border: 1px solid var(--line);
+}
+.prompt:hover { color: var(--text); border-color: var(--live); }

@@ -1,9 +1,12 @@
 import { useState, useMemo, useCallback, useEffect } from 'react';
 import MapView from './components/MapView';
 import campus from './data/places.json';
+import tasks from './data/tasks.json';
+import { searchPlaces } from './lib/search';
 import { CATEGORIES, colorFor, labelFor, distance, walkTime, formatDistance } from './lib/categories';
 
 export default function App() {
+  const [query, setQuery] = useState('');
   const [selected, setSelected] = useState(null);
   const [filter, setFilter] = useState(null);
   const [position, setPosition] = useState(null);
@@ -18,15 +21,28 @@ export default function App() {
     return Object.keys(CATEGORIES).filter(c => seen.has(c));
   }, [places]);
 
-  const visible = useMemo(
-    () => (filter ? places.filter(p => p.category === filter) : places),
-    [places, filter]
+  const search = useMemo(
+    () => searchPlaces(query, places, tasks),
+    [query, places]
   );
+
+  const searching = query.trim().length > 0;
+
+  const visible = useMemo(() => {
+    if (searching) return search.results;
+    return filter ? places.filter(p => p.category === filter) : places;
+  }, [searching, search.results, places, filter]);
 
   const listed = useMemo(() => {
     if (!position) return visible;
     return [...visible].sort((a, b) => distance(position, a) - distance(position, b));
   }, [visible, position]);
+
+  // Only offer prompts we can actually answer from the current dataset.
+  const suggestions = useMemo(() => {
+    const seen = new Set(places.map(p => p.category));
+    return tasks.filter(t => seen.has(t.category)).slice(0, 4);
+  }, [places]);
 
   const select = useCallback(p => setSelected(p), []);
 
@@ -95,7 +111,35 @@ export default function App() {
           )}
         </div>
 
-        {present.length > 1 && (
+        <div className="searchbox">
+          <input
+            value={query}
+            onChange={e => setQuery(e.target.value)}
+            placeholder="Try 'where do I pay fees' or 'canteen'"
+            aria-label="Search the campus"
+          />
+          {searching && (
+            <button className="clear" onClick={() => setQuery('')} aria-label="Clear search">
+              &times;
+            </button>
+          )}
+        </div>
+
+        {searching && search.task && (
+          <p className="taskanswer">{search.task.answer}</p>
+        )}
+
+        {!searching && (
+          <div className="prompts">
+            {suggestions.map(t => (
+              <button key={t.id} className="prompt" onClick={() => setQuery(t.question)}>
+                {t.question}
+              </button>
+            ))}
+          </div>
+        )}
+
+        {!searching && present.length > 1 && (
           <div className="filters">
             <button
               className={filter === null ? 'chip on' : 'chip'}
@@ -118,13 +162,24 @@ export default function App() {
 
         <div className="list">
           {listed.length === 0 ? (
-            <div className="empty">
-              <p>No places recorded yet.</p>
-              <p>
-                Open <code>tools/picker.html</code>, mark some buildings, then
-                replace <code>src/data/places.json</code> with the export.
-              </p>
-            </div>
+            searching ? (
+              <div className="empty">
+                <p>Nothing on the map matches that yet.</p>
+                <p>
+                  {search.task
+                    ? 'This kind of place has not been recorded on the map yet. Ask at the main gate.'
+                    : 'Try a shorter word, or describe what you need to do instead of the building name.'}
+                </p>
+              </div>
+            ) : (
+              <div className="empty">
+                <p>No places recorded yet.</p>
+                <p>
+                  Open <code>tools/picker.html</code>, mark some buildings, then
+                  replace <code>src/data/places.json</code> with the export.
+                </p>
+              </div>
+            )
           ) : (
             listed.map(p => {
               const away = position ? distance(position, p) : null;

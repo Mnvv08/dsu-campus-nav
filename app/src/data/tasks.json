@@ -1,0 +1,86 @@
+[
+  {
+    "id": "fees",
+    "question": "Where do I pay fees?",
+    "keywords": ["fees", "fee", "payment", "pay", "cash", "accounts", "finance"],
+    "category": "admin",
+    "answer": "Fee payment is handled by the accounts section in the administration area."
+  },
+  {
+    "id": "admission",
+    "question": "Where is the admission office?",
+    "keywords": ["admission", "admissions", "counselling", "counseling", "enroll", "enrolment", "documents", "verification"],
+    "category": "admin",
+    "answer": "Admissions and document verification happen in the administration area."
+  },
+  {
+    "id": "idcard",
+    "question": "Where do I get my ID card?",
+    "keywords": ["id", "idcard", "card", "identity", "photo"],
+    "category": "admin",
+    "answer": "ID cards are issued from the administration area."
+  },
+  {
+    "id": "eat",
+    "question": "Where can I eat?",
+    "keywords": ["eat", "food", "canteen", "cafeteria", "mess", "lunch", "breakfast", "dinner", "hungry", "tea", "coffee", "snacks"],
+    "category": "food",
+    "answer": "Canteens on this campus are spread out. Check the walking time before you set off between classes."
+  },
+  {
+    "id": "hostel",
+    "question": "Where is my hostel?",
+    "keywords": ["hostel", "room", "residence", "residences", "accommodation", "warden", "stay"],
+    "category": "hostel",
+    "answer": "Student accommodation on this campus is branded S' Residences."
+  },
+  {
+    "id": "library",
+    "question": "Where is the library?",
+    "keywords": ["library", "books", "study", "reading", "borrow", "journals"],
+    "category": "library",
+    "answer": "The central library holds around 37,000 titles and has digital access terminals."
+  },
+  {
+    "id": "class",
+    "question": "Where is my class?",
+    "keywords": ["class", "classroom", "lecture", "block", "department", "school", "lab", "laboratory", "exam", "seminar"],
+    "category": "academic",
+    "answer": "Teaching happens across several academic blocks. Check your timetable for the block name, then search it here."
+  },
+  {
+    "id": "doctor",
+    "question": "I need a doctor",
+    "keywords": ["doctor", "hospital", "medical", "clinic", "sick", "ill", "injury", "injured", "emergency", "pharmacy", "medicine", "first", "aid"],
+    "category": "medical",
+    "answer": "CDSIMER, the campus hospital, has over 450 beds. In an emergency, call campus security first rather than walking."
+  },
+  {
+    "id": "bus",
+    "question": "Where do I catch the bus?",
+    "keywords": ["bus", "transport", "shuttle", "drop", "pickup", "leave", "home", "city", "bmtc", "ksrtc", "cab", "auto"],
+    "category": "transport",
+    "answer": "The campus sits well outside the city, so university buses matter. Check timings with the transport office in advance."
+  },
+  {
+    "id": "money",
+    "question": "Where is an ATM?",
+    "keywords": ["atm", "money", "cash", "bank", "withdraw", "xerox", "print", "printout", "stationery", "photocopy"],
+    "category": "utility",
+    "answer": "Amenities like ATMs and stationery counters are limited on campus. Plan ahead."
+  },
+  {
+    "id": "sports",
+    "question": "Where can I play?",
+    "keywords": ["sports", "play", "ground", "gym", "fitness", "football", "cricket", "basketball", "tennis", "badminton", "squash", "track", "run"],
+    "category": "sports",
+    "answer": "Facilities include a football turf with an athletic running track, a cricket ground, and several courts."
+  },
+  {
+    "id": "entry",
+    "question": "How do I get in?",
+    "keywords": ["gate", "entrance", "entry", "security", "visitor", "guest", "parking", "park", "car", "bike"],
+    "category": "gate",
+    "answer": "Visitors normally sign in at the main gate on Kanakapura Road."
+  }
+]
