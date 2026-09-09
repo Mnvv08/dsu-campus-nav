@@ -1,7 +1,5 @@
-import { useEffect, useState } from 'react';
-import Chat from './Chat';
+import { useEffect } from 'react';
 import InstallPrompt from './InstallPrompt';
-import campus from '../data/places.json';
 
 // The plan view is the most characteristic image in this subject's world:
 // blocks, a lake, a path, and a pin on the one you want. Drawn rather
@@ -69,7 +67,6 @@ function PlanView() {
 }
 
 export default function Home({ onEnter, placeCount, pathCount }) {
-  const [chatOpen, setChatOpen] = useState(false);
   useEffect(() => {
     document.title = 'DSU Campus Navigator';
   }, []);
@@ -98,7 +95,6 @@ export default function Home({ onEnter, placeCount, pathCount }) {
           </p>
           <div className="actions">
             <button className="go" onClick={onEnter}>Open the map</button>
-            <button className="alt" onClick={() => setChatOpen(true)}>Ask a question</button>
           </div>
           {placeCount > 0 && (
             <p className="counts">
@@ -234,23 +230,6 @@ export default function Home({ onEnter, placeCount, pathCount }) {
           </a>
         </div>
       </section>
-
-      {!chatOpen && (
-        <button className="chatlauncher" onClick={() => setChatOpen(true)} aria-label="Ask a question">
-          💬
-        </button>
-      )}
-
-      {chatOpen && (
-        <div className="homechat">
-          <Chat
-            places={campus.places ?? []}
-            lang="en"
-            onClose={() => setChatOpen(false)}
-            onMention={() => {}}
-          />
-        </div>
-      )}
 
       <footer className="sitefoot">
         <p>

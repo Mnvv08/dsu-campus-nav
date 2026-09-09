@@ -151,32 +151,6 @@
 }
 
 
-/* Chat launcher on the landing page */
-.chatlauncher {
-  position: fixed; right: 24px; bottom: 24px; z-index: 40;
-  width: 56px; height: 56px; border-radius: 50%;
-  background: #4ee39a; border: none;
-  font-size: 24px; cursor: pointer;
-  box-shadow: 0 8px 24px rgba(0,0,0,.4);
-}
-.chatlauncher:hover { filter: brightness(1.08); }
-
-/* The .chat component itself is styled assuming it sits inside the map
-   panel (index.css), positioned relative to that layout. On the landing
-   page there is no such panel, so this wrapper repositions it as a
-   fixed corner panel instead, reusing the same internal component. */
-.homechat .chat {
-  position: fixed; right: 24px; bottom: 24px; left: auto; top: auto;
-  width: min(380px, calc(100vw - 32px));
-  max-height: min(70vh, 560px);
-  z-index: 50;
-}
-
-@media (max-width: 760px) {
-  .chatlauncher { right: 16px; bottom: 16px; width: 52px; height: 52px; }
-  .homechat .chat { right: 8px; left: 8px; bottom: 8px; width: auto; }
-}
-
 
 /* Install prompt sits above the sticky nav on the landing page */
 .site .installbar { position: sticky; top: 0; z-index: 20; }
