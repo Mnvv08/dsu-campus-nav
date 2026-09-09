@@ -2,6 +2,7 @@ import { useState, useMemo, useCallback, useEffect } from 'react';
 import MapView from './components/MapView';
 import Chat from './components/Chat';
 import Navigate from './components/Navigate';
+import InstallPrompt from './components/InstallPrompt';
 import { getSaved, toggleSaved } from './lib/saved';
 import campus from './data/places.json';
 import tasks from './data/tasks.json';
@@ -216,6 +217,7 @@ export default function App({ startChat = false, onHome }) {
 
   return (
     <div className="shell">
+      <InstallPrompt lang={lang} />
       <MapView
         center={campus.center}
         places={visible}

@@ -492,3 +492,27 @@ button:focus-visible, .row:focus-visible { outline: 2px solid var(--live); outli
   50% { box-shadow: 0 0 0 6px rgba(255,91,91,0); }
 }
 @media (prefers-reduced-motion: reduce) { .mic.on { animation: none; } }
+
+/* Install prompt */
+.installbar {
+  position: absolute; left: 0; right: 0; top: 0; z-index: 900;
+  display: flex; align-items: center; justify-content: space-between; gap: 14px;
+  padding: 12px 18px;
+  background: #101413; border-bottom: 1px solid var(--line);
+}
+.installtext { display: flex; flex-direction: column; min-width: 0; }
+.installtext strong { font-size: 14px; }
+.installtext span { color: var(--muted); font-size: 12px; margin-top: 2px; }
+.installactions { display: flex; gap: 8px; flex: none; }
+.installgo {
+  padding: 8px 14px; border-radius: 7px;
+  background: var(--live); color: #06170f; border: none; font-weight: 600; font-size: 13px;
+}
+.installlater {
+  padding: 8px 12px; border-radius: 7px;
+  background: none; color: var(--muted); border: 1px solid var(--line); font-size: 13px;
+}
+@media (max-width: 760px) {
+  .installbar { flex-direction: column; align-items: stretch; gap: 10px; }
+  .installactions { justify-content: flex-end; }
+}

@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import Chat from './Chat';
+import InstallPrompt from './InstallPrompt';
 import campus from '../data/places.json';
 
 // The plan view is the most characteristic image in this subject's world:
@@ -75,6 +76,7 @@ export default function Home({ onEnter, placeCount, pathCount }) {
 
   return (
     <div className="site">
+      <InstallPrompt lang="en" />
       <nav className="sitenav">
         <span className="mark">DSU Campus Navigator</span>
         <div className="navlinks">

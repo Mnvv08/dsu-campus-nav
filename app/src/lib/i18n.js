@@ -93,6 +93,23 @@ const UI = {
     kn: 'ಈ ಬ್ರೌಸರ್ ನಿಮ್ಮ ಸ್ಥಳವನ್ನು ಹಂಚಲು ಸಾಧ್ಯವಿಲ್ಲ.',
     hi: 'यह ब्राउज़र आपकी लोकेशन साझा नहीं कर सकता।'
   },
+  installTitle: {
+    en: 'Add this to your home screen',
+    kn: 'ಇದನ್ನು ನಿಮ್ಮ ಹೋಮ್ ಸ್ಕ್ರೀನ್‌ಗೆ ಸೇರಿಸಿ',
+    hi: 'इसे अपनी होम स्क्रीन पर जोड़ें'
+  },
+  installBody: {
+    en: 'Opens full-screen next time, like a real app — no address bar.',
+    kn: 'ಮುಂದಿನ ಬಾರಿ ಪೂರ್ಣ ಪರದೆಯಲ್ಲಿ ತೆರೆಯುತ್ತದೆ, ನಿಜವಾದ ಆಪ್‌ನಂತೆ.',
+    hi: 'अगली बार यह पूरी स्क्रीन पर खुलेगा, असली ऐप की तरह।'
+  },
+  installBtn: { en: 'Add to Home Screen', kn: 'ಹೋಮ್ ಸ್ಕ್ರೀನ್‌ಗೆ ಸೇರಿಸಿ', hi: 'होम स्क्रीन पर जोड़ें' },
+  installIOS: {
+    en: 'Tap the Share button below, then "Add to Home Screen".',
+    kn: 'ಕೆಳಗಿನ ಶೇರ್ ಬಟನ್ ಒತ್ತಿ, ನಂತರ "Add to Home Screen" ಆಯ್ಕೆಮಾಡಿ.',
+    hi: 'नीचे शेयर बटन दबाएँ, फिर "Add to Home Screen" चुनें।'
+  },
+  installLater: { en: 'Not now', kn: 'ಈಗ ಬೇಡ', hi: 'अभी नहीं' },
   saved: { en: 'Saved', kn: 'ಉಳಿಸಿದವು', hi: 'सहेजे गए' },
   save: { en: 'Save', kn: 'ಉಳಿಸಿ', hi: 'सहेजें' },
   saved_action: { en: 'Saved', kn: 'ಉಳಿಸಲಾಗಿದೆ', hi: 'सहेजा गया' },
