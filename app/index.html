@@ -3,6 +3,11 @@
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="./icon.svg" />
+    <!-- iOS Safari's "Add to Home Screen" ignores SVG icons entirely and
+         silently falls back to a screenshot thumbnail without this —
+         which would undermine the install prompt built specifically to
+         get people to this exact screen. -->
+    <link rel="apple-touch-icon" href="./apple-touch-icon.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>DSU Campus Navigator</title>
     <meta name="description" content="A wayfinding app for the DSU Harohalli campus. Search by task, get walking directions on real traced paths, and ask an AI assistant in English, Kannada or Hindi." />
