@@ -99,21 +99,6 @@
       "lng": 77.4548268
     },
     {
-      "id": "central-library",
-      "name": "Central Library",
-      "name_kn": "ಕೇಂದ್ರ ಗ್ರಂಥಾಲಯ",
-      "name_hi": "केंद्रीय पुस्तकालय",
-      "aliases": [
-        "Library",
-        "ThinkCentre"
-      ],
-      "category": "library",
-      "confidence": "guess",
-      "notes": "Holds around 37,000 titles across roughly 190,000 volumes, with a digital access section called ThinkCentre.",
-      "lat": 12.6601,
-      "lng": 77.4529
-    },
-    {
       "id": "hostel-girls",
       "name": "S' Residence — Girls Hostel",
       "name_kn": "ಎಸ್ ರೆಸಿಡೆನ್ಸ್ — ಗರ್ಲ್ಸ್ ಹಾಸ್ಟೆಲ್",
@@ -126,51 +111,6 @@
       "notes": "Student accommodation branded S' Residence, near the boys' hostel blocks.",
       "lat": 12.6576,
       "lng": 77.4462
-    },
-    {
-      "id": "canteen-main",
-      "name": "Main Canteen",
-      "name_kn": "ಮುಖ್ಯ ಕ್ಯಾಂಟೀನ್",
-      "name_hi": "मुख्य कैंटीन",
-      "aliases": [
-        "Canteen",
-        "Food court"
-      ],
-      "category": "food",
-      "confidence": "guess",
-      "notes": "Closest canteen to the Engineering Block. Canteens on this campus are spread out, so it's worth checking the walk time before heading over between classes.",
-      "lat": 12.6599,
-      "lng": 77.4509
-    },
-    {
-      "id": "admin-block",
-      "name": "Administration Block",
-      "name_kn": "ಆಡಳಿತ ಕಟ್ಟಡ",
-      "name_hi": "प्रशासनिक भवन",
-      "aliases": [
-        "Admin",
-        "Registrar office"
-      ],
-      "category": "admin",
-      "confidence": "guess",
-      "notes": "Registrar's office and general administration.",
-      "lat": 12.6613,
-      "lng": 77.4524
-    },
-    {
-      "id": "bus-stop",
-      "name": "Campus Bus Point",
-      "name_kn": "ಕ್ಯಾಂಪಸ್ ಬಸ್ ನಿಲ್ದಾಣ",
-      "name_hi": "परिसर बस स्टॉप",
-      "aliases": [
-        "Bus stop",
-        "Shuttle point"
-      ],
-      "category": "transport",
-      "confidence": "guess",
-      "notes": "University bus pickup and drop point. Check timings with the transport office in advance.",
-      "lat": 12.6587,
-      "lng": 77.4497
     },
     {
       "id": "ai-building",

@@ -39,7 +39,7 @@ None of this data existed. Three purpose-built tools in this repository create a
 
 Building positions come from two sources: real, verified coordinates pulled from Google's own location data where a listing exists, and careful satellite tracing where it doesn't. Names, floors, and departments come from signboards, timetables, and students who already know the place. Every entry is marked `confirmed`, `likely`, or `guess`, and the app never blurs that line for the user.
 
-As it stands: **12 places mapped, 6 of them confirmed against real Google-verified coordinates**, connected by **10 traced walking paths**.
+As it stands: **8 places mapped, 6 of them confirmed against real Google-verified coordinates**, connected by **6 traced walking paths**. Four earlier placeholder guesses — a canteen, library, admin block and bus stop placed with no real evidence behind them — were removed rather than left showing wrong information, since a confident wrong pin is worse than an honest gap.
 
 | Tool | Purpose |
 |---|---|
@@ -125,7 +125,8 @@ Every place in the app has a "Something wrong here? Tell us" link that opens a p
 
 What's most needed right now:
 
-- The six remaining `guess`/`likely` places verified and corrected from the ground
+- The two remaining `guess` places (girls' hostel, AI building) verified and corrected from the ground
+- A canteen, library, admin block and bus stop mapped for the first time — these were removed after being placed without evidence, and the campus still needs all four located
 - Departments and floor numbers added from real timetables
 - Stairs tagged on the traced paths so step-free routing has more to work with
 - Kannada and Hindi names filled in for buildings that don't have them yet
