@@ -33,6 +33,13 @@ jobs:
 
       - name: Build
         working-directory: app
+        # VITE_CHAT_URL only ever lived in a local .env file, which is
+        # gitignored on purpose — so the live build never had it and the
+        # chatbot showed "not configured" for every visitor. Sourcing it
+        # from a repo secret here is what actually gets it into the
+        # deployed bundle.
+        env:
+          VITE_CHAT_URL: ${{ secrets.VITE_CHAT_URL }}
         run: npm run build
 
       - uses: actions/configure-pages@v5
