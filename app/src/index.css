@@ -226,7 +226,9 @@ button:focus-visible, .row:focus-visible { outline: 2px solid var(--live); outli
 }
 .fix:hover { color: var(--text); border-color: var(--live); }
 
-.langs { display: flex; gap: 6px; margin-top: 12px; }
+/* flex-wrap, since 7 languages no longer fit a single row without
+   clipping the last couple of buttons off the edge of the panel. */
+.langs { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; }
 .lang {
   padding: 4px 10px;
   border-radius: 999px;
