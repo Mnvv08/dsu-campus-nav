@@ -99,16 +99,18 @@
       "lng": 77.4548268
     },
     {
-      "id": "hostel-girls",
-      "name": "S' Residence — Girls Hostel",
-      "name_kn": "ಎಸ್ ರೆಸಿಡೆನ್ಸ್ — ಗರ್ಲ್ಸ್ ಹಾಸ್ಟೆಲ್",
-      "name_hi": "एस' रेजिडेंस — गर्ल्ज़ हॉस्टल",
+      "id": "hostel-mess",
+      "name": "Hostel Mess",
+      "name_kn": "ಹಾಸ್ಟೆಲ್ ಮೆಸ್",
+      "name_hi": "हॉस्टल मेस",
       "aliases": [
-        "Girls hostel"
+        "Mess",
+        "Dining hall",
+        "Canteen"
       ],
-      "category": "hostel",
-      "confidence": "guess",
-      "notes": "Student accommodation branded S' Residence, near the boys' hostel blocks.",
+      "category": "food",
+      "confidence": "confirmed",
+      "notes": "Dining hall serving the hostel blocks. Identified directly by a student on campus.",
       "lat": 12.6576,
       "lng": 77.4462
     },
