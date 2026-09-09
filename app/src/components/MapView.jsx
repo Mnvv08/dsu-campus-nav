@@ -41,14 +41,20 @@ export default function MapView({ center, places, selected, onSelect, position, 
 
   // Set the map up once.
   useEffect(() => {
-    const m = L.map(holder.current, { zoomControl: false, maxZoom: 20 })
+    // Capped lower than Esri's nominal max. This is a rural area, and
+    // past a certain zoom Esri simply has no photography for parts of
+    // it — not a slow load, an actual gap that renders as a "Map data
+    // not yet available" placeholder tile. Capping the app's zoom keeps
+    // users from ever scrolling into that gap rather than trying to
+    // detect and explain it after the fact.
+    const m = L.map(holder.current, { zoomControl: false, maxZoom: 18 })
       .setView([center.lat, center.lng], 16);
 
     L.tileLayer(
       'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
       {
-        maxZoom: 20,
-        maxNativeZoom: 19,
+        maxZoom: 18,
+        maxNativeZoom: 18,
         attribution: 'Imagery &copy; Esri, Maxar'
       }
     ).addTo(m);
@@ -96,7 +102,7 @@ export default function MapView({ center, places, selected, onSelect, position, 
     // fitBounds throws on an empty set, and on a single point it zooms to
     // maximum, which loses all surrounding context.
     if (places.length > 1) {
-      m.fitBounds(places.map(p => [p.lat, p.lng]), { padding: [50, 50], maxZoom: 18 });
+      m.fitBounds(places.map(p => [p.lat, p.lng]), { padding: [50, 50], maxZoom: 17 });
     } else if (places.length === 1) {
       m.setView([places[0].lat, places[0].lng], 18);
     }
@@ -128,7 +134,7 @@ export default function MapView({ center, places, selected, onSelect, position, 
       L.polyline(routeLine, { color: '#4ee39a', weight: 4, opacity: .95 })
     ]).addTo(m);
 
-    m.fitBounds(routeLine, { padding: [70, 70], maxZoom: 19 });
+    m.fitBounds(routeLine, { padding: [70, 70], maxZoom: 18 });
   }, [routeLine]);
 
   // Track the user.
