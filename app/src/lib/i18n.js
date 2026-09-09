@@ -93,6 +93,42 @@ const UI = {
     kn: 'ಈ ಬ್ರೌಸರ್ ನಿಮ್ಮ ಸ್ಥಳವನ್ನು ಹಂಚಲು ಸಾಧ್ಯವಿಲ್ಲ.',
     hi: 'यह ब्राउज़र आपकी लोकेशन साझा नहीं कर सकता।'
   },
+  emergencyBtn: { en: 'Help', kn: 'ಸಹಾಯ', hi: 'सहायता' },
+  emergencyTitle: {
+    en: 'Emergency and medical help',
+    kn: 'ತುರ್ತು ಮತ್ತು ವೈದ್ಯಕೀಯ ಸಹಾಯ',
+    hi: 'आपातकाल और चिकित्सा सहायता'
+  },
+  emergencyIntro: {
+    en: 'For a life-threatening emergency, call first. Walking there yourself costs time you may not have.',
+    kn: 'ಜೀವಕ್ಕೆ ಅಪಾಯವಿದ್ದರೆ, ಮೊದಲು ಕರೆ ಮಾಡಿ. ನಡೆದುಕೊಂಡು ಹೋಗುವುದು ಸಮಯ ವ್ಯರ್ಥ ಮಾಡಬಹುದು.',
+    hi: 'जानलेवा आपातकाल में पहले कॉल करें। खुद चलकर जाना समय बर्बाद कर सकता है।'
+  },
+  emergencyNationalLabel: {
+    en: 'National emergency numbers',
+    kn: 'ರಾಷ್ಟ್ರೀಯ ತುರ್ತು ಸಂಖ್ಯೆಗಳು',
+    hi: 'राष्ट्रीय आपातकालीन नंबर'
+  },
+  emergencyUnified: { en: 'All emergencies', kn: 'ಎಲ್ಲಾ ತುರ್ತುಸ್ಥಿತಿಗಳು', hi: 'सभी आपातकाल' },
+  emergencyAmbulance: { en: 'Ambulance', kn: 'ಆಂಬ್ಯುಲೆನ್ಸ್', hi: 'एम्बुलेंस' },
+  emergencyPolice: { en: 'Police', kn: 'ಪೊಲೀಸ್', hi: 'पुलिस' },
+  emergencyCampusLabel: {
+    en: 'University main line',
+    kn: 'ವಿಶ್ವವಿದ್ಯಾಲಯದ ಮುಖ್ಯ ಸಂಖ್ಯೆ',
+    hi: 'विश्वविद्यालय की मुख्य लाइन'
+  },
+  emergencyCampusHours: {
+    en: 'Answered 9 AM to 4:30 PM on weekdays. Not a 24-hour line.',
+    kn: 'ವಾರದ ದಿನಗಳಲ್ಲಿ ಬೆಳಿಗ್ಗೆ 9 ರಿಂದ ಸಂಜೆ 4:30 ರವರೆಗೆ. 24 ಗಂಟೆಗಳ ಸಂಖ್ಯೆ ಅಲ್ಲ.',
+    hi: 'सप्ताह के दिनों में सुबह 9 से शाम 4:30 बजे तक। यह 24 घंटे की लाइन नहीं है।'
+  },
+  emergencyHospitalLabel: {
+    en: 'Nearest hospital',
+    kn: 'ಹತ್ತಿರದ ಆಸ್ಪತ್ರೆ',
+    hi: 'नज़दीकी अस्पताल'
+  },
+  emergencyGoThere: { en: 'Show on map', kn: 'ನಕ್ಷೆಯಲ್ಲಿ ತೋರಿಸಿ', hi: 'नक्शे पर दिखाएँ' },
+  emergencyClose: { en: 'Close', kn: 'ಮುಚ್ಚಿ', hi: 'बंद करें' },
   installTitle: {
     en: 'Add this to your home screen',
     kn: 'ಇದನ್ನು ನಿಮ್ಮ ಹೋಮ್ ಸ್ಕ್ರೀನ್‌ಗೆ ಸೇರಿಸಿ',
