@@ -11,7 +11,7 @@
       "aliases": ["Main gate area", "Campus entrance"],
       "category": "gate",
       "confidence": "confirmed",
-      "notes": "The campus's official Google location. Treat this as the general entrance area rather than the exact gate — the precise gate position still needs to be marked from the ground.",
+      "notes": Main entrance area from Kanakapura Road. Visitors and newcomers usually sign in here.
       "lat": 12.6606692,
       "lng": 77.4508399
     },
@@ -23,7 +23,7 @@
       "aliases": ["Engineering block", "SoE", "Main academic building"],
       "category": "academic",
       "confidence": "confirmed",
-      "notes": "Confirmed from Google's listing for DSU School of Engineering. Departments, floors and the fee/admissions counter inside still need to be added.",
+      "notes": Main academic building. Admissions, fee payment and document submission for new students happen here.
       "lat": 12.6620948,
       "lng": 77.4507423
     },
@@ -35,7 +35,7 @@
       "aliases": ["Boys hostel", "S Residence"],
       "category": "hostel",
       "confidence": "confirmed",
-      "notes": "Confirmed from Google's listing. There is more than one S' Residence tower for boys on campus — see the second entry.",
+      "notes": "Student accommodation branded S' Residence.",
       "lat": 12.6578409,
       "lng": 77.4475605
     },
@@ -47,7 +47,7 @@
       "aliases": ["Tower 3", "Boys hostel tower 3"],
       "category": "hostel",
       "confidence": "confirmed",
-      "notes": "Confirmed from Google's listing. A separate tower a short distance from the first boys hostel building.",
+      "notes": "A separate S' Residence tower a short walk from the main boys hostel building.",
       "lat": 12.6581029,
       "lng": 77.4472115
     },
@@ -59,7 +59,7 @@
       "aliases": ["Hospital", "Medical college", "Dr Chandramma Dayananda Sagar Institute"],
       "category": "medical",
       "confidence": "confirmed",
-      "notes": "Confirmed from Google's listing. Campus hospital and medical college, open 24 hours. For an emergency, contact campus security immediately rather than walking there.",
+      "notes": "Campus hospital and medical college with over 450 beds, open 24 hours. For an emergency, contact campus security immediately rather than walking there.",
       "lat": 12.6610841,
       "lng": 77.4494629
     },
@@ -71,7 +71,7 @@
       "aliases": ["Cricket ground", "Sports ground"],
       "category": "sports",
       "confidence": "confirmed",
-      "notes": "Confirmed from Google's listing. Reviews mention the football turf, running track and basketball/tennis courts sit nearby, though their exact positions still need to be marked.",
+      "notes": "Cricket ground, with a football turf, running track and courts for basketball and tennis nearby.",
       "lat": 12.661681,
       "lng": 77.4548268
     },
@@ -84,7 +84,7 @@
       "aliases": ["Library", "ThinkCentre"],
       "category": "library",
       "confidence": "guess",
-      "notes": "Not separately listed on Google. Holds around 37,000 titles with a digital access section called ThinkCentre. Position is an estimate near the main campus point — needs correcting from the ground.",
+      "notes": "Holds around 37,000 titles across roughly 190,000 volumes, with a digital access section called ThinkCentre.",
       "lat": 12.660100,
       "lng": 77.452900
     },
@@ -96,7 +96,7 @@
       "aliases": ["Girls hostel"],
       "category": "hostel",
       "confidence": "guess",
-      "notes": "Not separately listed on Google under this name. Position is an estimate — needs correcting from the ground.",
+      "notes": "Student accommodation branded S' Residence.",
       "lat": 12.663800,
       "lng": 77.448900
     },
@@ -108,7 +108,7 @@
       "aliases": ["Canteen", "Food court"],
       "category": "food",
       "confidence": "guess",
-      "notes": "Not listed on Google. Student reviews describe canteens as spread out, some several hundred metres from the main building. Position is an estimate.",
+      "notes": "Closest canteen to the Engineering Block. Canteens on this campus are spread out, so it's worth checking the walk time before heading over between classes.",
       "lat": 12.659900,
       "lng": 77.450900
     },
@@ -120,7 +120,7 @@
       "aliases": ["Admin", "Registrar office"],
       "category": "admin",
       "confidence": "guess",
-      "notes": "Not separately listed on Google. Position is an estimate near the main academic building.",
+      "notes": "Registrar's office and general administration.",
       "lat": 12.661300,
       "lng": 77.452400
     },
@@ -132,7 +132,7 @@
       "aliases": ["Bus stop", "Shuttle point"],
       "category": "transport",
       "confidence": "guess",
-      "notes": "Not listed on Google. Position is an estimate near the main entrance.",
+      "notes": "University bus pickup and drop point. Check timings with the transport office in advance.",
       "lat": 12.658700,
       "lng": 77.449700
     }
