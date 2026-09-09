@@ -128,6 +128,21 @@
       "notes": "Dedicated building for the AI programme, with its own experience centre.",
       "lat": 12.6615,
       "lng": 77.4513
+    },
+    {
+      "id": "hostel-girls-2sharing",
+      "name": "Girls Hostel (2 Sharing)",
+      "name_kn": "ಗರ್ಲ್ಸ್ ಹಾಸ್ಟೆಲ್ (2 ಶೇರಿಂಗ್)",
+      "name_hi": "गर्ल्ज़ हॉस्टल (2 शेयरिंग)",
+      "aliases": [
+        "Girls hostel",
+        "2 sharing block"
+      ],
+      "category": "hostel",
+      "confidence": "guess",
+      "notes": "Girls' hostel with 2-sharing rooms, identified by a student. Position estimated from its distance and direction relative to the confirmed Hostel Mess pin in the same photo — closer to accurate than a blind guess, but not GPS-exact.",
+      "lat": 12.6552,
+      "lng": 77.449
     }
   ]
 }
