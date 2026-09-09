@@ -2,6 +2,7 @@ import { useState, useMemo, useCallback, useEffect } from 'react';
 import MapView from './components/MapView';
 import Chat from './components/Chat';
 import Navigate from './components/Navigate';
+import { getSaved, toggleSaved } from './lib/saved';
 import campus from './data/places.json';
 import tasks from './data/tasks.json';
 import pathData from './data/paths.json';
@@ -76,6 +77,9 @@ export default function App({ startChat = false, onHome }) {
   const [avoidSteps, setAvoidSteps] = useState(false);
   const [chatOpen, setChatOpen] = useState(startChat);
   const [navOn, setNavOn] = useState(false);
+  const [saved, setSaved] = useState(getSaved);
+  const [showSaved, setShowSaved] = useState(false);
+  const [shareMsg, setShareMsg] = useState(null);
   const [activeTask, setActiveTask] = useState(null);
 
   const present = useMemo(() => {
@@ -96,6 +100,7 @@ export default function App({ startChat = false, onHome }) {
   const shownTask = typing ? search.task : activeTask;
 
   const visible = useMemo(() => {
+    if (showSaved) return places.filter(p => saved.includes(p.id));
     if (activeTask && !typing) {
       return places.filter(p => p.category === activeTask.category);
     }
@@ -107,7 +112,7 @@ export default function App({ startChat = false, onHome }) {
         .map(r => r.place);
     }
     return filter ? places.filter(p => p.category === filter) : places;
-  }, [activeTask, typing, searching, search.results, places, filter]);
+  }, [showSaved, saved, activeTask, typing, searching, search.results, places, filter]);
 
   const listed = useMemo(() => {
     // While searching, relevance ordering wins; browsing sorts by distance.
@@ -124,6 +129,31 @@ export default function App({ startChat = false, onHome }) {
   }, [places]);
 
   const select = useCallback(p => setSelected(p), []);
+
+  const toggleSave = useCallback(id => {
+    setSaved(prev => toggleSaved(id, prev));
+  }, []);
+
+  const share = useCallback(async (place) => {
+    let base = window.location.href.split('#')[0];
+    const url = `${base}#/map?at=${encodeURIComponent(place.id)}`;
+    const text = typeof t('shareText', lang) === 'function'
+      ? t('shareText', lang)(placeName(place, lang))
+      : placeName(place, lang);
+
+    if (navigator.share) {
+      try { await navigator.share({ title: placeName(place, lang), text, url }); }
+      catch { /* user cancelled the native share sheet — not an error */ }
+      return;
+    }
+    try {
+      await navigator.clipboard.writeText(url);
+      setShareMsg(t('linkCopied', lang));
+      setTimeout(() => setShareMsg(null), 2000);
+    } catch {
+      /* clipboard blocked; nothing more we can do without a UI prompt */
+    }
+  }, [lang]);
 
   // Ask the service worker how much imagery is stored offline.
   useEffect(() => {
@@ -227,9 +257,18 @@ export default function App({ startChat = false, onHome }) {
           </div>
         )}
 
-        <button className="askbtn" onClick={() => setChatOpen(true)}>
-          {t('chatOpen', lang)}
-        </button>
+        <div className="topactions">
+          <button className="askbtn" onClick={() => setChatOpen(true)}>
+            {t('chatOpen', lang)}
+          </button>
+          <button
+            className={showSaved ? 'savedbtn on' : 'savedbtn'}
+            onClick={() => setShowSaved(v => !v)}
+            aria-pressed={showSaved}
+          >
+            ★ {t('saved', lang)}{saved.length > 0 && ` (${saved.length})`}
+          </button>
+        </div>
 
         <div className="locate">
           <button
@@ -304,7 +343,9 @@ export default function App({ startChat = false, onHome }) {
         )}
 
         <div className="list">
-          {listed.length === 0 ? (
+          {showSaved && listed.length === 0 ? (
+            <div className="empty"><p>{t('noSaved', lang)}</p></div>
+          ) : listed.length === 0 ? (
             searching ? (
               <div className="empty">
                 <p>{t('noMatch', lang)}</p>
@@ -323,23 +364,32 @@ export default function App({ startChat = false, onHome }) {
             listed.map(({ place: p, unit }) => {
               const away = origin ? distance(origin, p) : null;
               return (
-                <button
+                <div
                   key={unit ? `${p.id}:${unit.name}` : p.id}
                   className={selected?.id === p.id ? 'row on' : 'row'}
-                  onClick={() => select(p)}
                 >
-                  <span className="swatch" style={{ background: colorFor(p.category) }} />
-                  <span className="rowtext">
-                    <strong>{unit ? placeName(unit, lang) : placeName(p, lang)}</strong>
-                    <em>
-                      {unit
-                        ? `${placeName(p, lang)} · ${floorLabel(unit.floor, lang)}`
-                        : categoryLabel(p.category, lang)}
-                      {away !== null && ` · ${formatDistance(away)}`}
-                      {p.confidence !== 'confirmed' && ` · ${t('unverified', lang)}`}
-                    </em>
-                  </span>
-                </button>
+                  <button className="rowmain" onClick={() => select(p)}>
+                    <span className="swatch" style={{ background: colorFor(p.category) }} />
+                    <span className="rowtext">
+                      <strong>{unit ? placeName(unit, lang) : placeName(p, lang)}</strong>
+                      <em>
+                        {unit
+                          ? `${placeName(p, lang)} · ${floorLabel(unit.floor, lang)}`
+                          : categoryLabel(p.category, lang)}
+                        {away !== null && ` · ${formatDistance(away)}`}
+                        {p.confidence !== 'confirmed' && ` · ${t('unverified', lang)}`}
+                      </em>
+                    </span>
+                  </button>
+                  <button
+                    className={saved.includes(p.id) ? 'star on' : 'star'}
+                    onClick={() => toggleSave(p.id)}
+                    aria-label={saved.includes(p.id) ? t('unsave', lang) : t('save', lang)}
+                    aria-pressed={saved.includes(p.id)}
+                  >
+                    ★
+                  </button>
+                </div>
               );
             })
           )}
@@ -375,6 +425,19 @@ export default function App({ startChat = false, onHome }) {
             {categoryLabel(selected.category, lang)}
             {origin && ` · ${walkTime(distance(origin, selected), lang)}`}
           </p>
+
+          <div className="sheetactions">
+            <button
+              className={saved.includes(selected.id) ? 'chipbtn on' : 'chipbtn'}
+              onClick={() => toggleSave(selected.id)}
+            >
+              ★ {saved.includes(selected.id) ? t('saved_action', lang) : t('save', lang)}
+            </button>
+            <button className="chipbtn" onClick={() => share(selected)}>
+              ↗ {t('share', lang)}
+            </button>
+          </div>
+          {shareMsg && <p className="sharemsg">{shareMsg}</p>}
           {placeNotes(selected, lang) && <p className="notes">{placeNotes(selected, lang)}</p>}
           {selected.units?.length > 0 && (
             <div className="units">

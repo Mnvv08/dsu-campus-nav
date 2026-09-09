@@ -93,6 +93,22 @@ const UI = {
     kn: 'ಈ ಬ್ರೌಸರ್ ನಿಮ್ಮ ಸ್ಥಳವನ್ನು ಹಂಚಲು ಸಾಧ್ಯವಿಲ್ಲ.',
     hi: 'यह ब्राउज़र आपकी लोकेशन साझा नहीं कर सकता।'
   },
+  saved: { en: 'Saved', kn: 'ಉಳಿಸಿದವು', hi: 'सहेजे गए' },
+  save: { en: 'Save', kn: 'ಉಳಿಸಿ', hi: 'सहेजें' },
+  saved_action: { en: 'Saved', kn: 'ಉಳಿಸಲಾಗಿದೆ', hi: 'सहेजा गया' },
+  unsave: { en: 'Remove', kn: 'ತೆಗೆದುಹಾಕಿ', hi: 'हटाएँ' },
+  noSaved: {
+    en: 'Nothing saved yet. Tap the star on a place to keep it here.',
+    kn: 'ಇನ್ನೂ ಏನೂ ಉಳಿಸಿಲ್ಲ. ಸ್ಥಳವನ್ನು ಇಲ್ಲಿ ಇರಿಸಲು ನಕ್ಷತ್ರ ಒತ್ತಿ.',
+    hi: 'अभी कुछ सहेजा नहीं गया। किसी जगह को यहाँ रखने के लिए तारे पर टैप करें।'
+  },
+  share: { en: 'Share', kn: 'ಹಂಚಿಕೊಳ್ಳಿ', hi: 'साझा करें' },
+  linkCopied: { en: 'Link copied', kn: 'ಲಿಂಕ್ ನಕಲಿಸಲಾಗಿದೆ', hi: 'लिंक कॉपी हो गया' },
+  shareText: {
+    en: (name) => `${name} — find it on the DSU Campus Navigator`,
+    kn: (name) => `${name} — DSU ಕ್ಯಾಂಪಸ್ ನ್ಯಾವಿಗೇಟರ್‌ನಲ್ಲಿ ನೋಡಿ`,
+    hi: (name) => `${name} — DSU कैंपस नेविगेटर पर देखें`
+  },
   chatTitle: { en: 'Ask about the campus', kn: 'ಕ್ಯಾಂಪಸ್ ಬಗ್ಗೆ ಕೇಳಿ', hi: 'परिसर के बारे में पूछें' },
   chatOpen: { en: 'Ask a question', kn: 'ಪ್ರಶ್ನೆ ಕೇಳಿ', hi: 'सवाल पूछें' },
   chatSend: { en: 'Send', kn: 'ಕಳುಹಿಸಿ', hi: 'भेजें' },

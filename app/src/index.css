@@ -432,3 +432,46 @@ button:focus-visible, .row:focus-visible { outline: 2px solid var(--live); outli
 @media (max-width: 760px) {
   .navbar { left: 8px; right: 8px; top: 8px; padding: 12px; }
 }
+
+/* Save & share */
+.topactions { display: flex; gap: 8px; margin: 14px 22px 0; }
+.topactions .askbtn { margin: 0; width: auto; flex: 1; }
+.savedbtn {
+  flex: none; padding: 10px 14px; border-radius: 7px;
+  background: var(--field); color: var(--text);
+  border: 1px solid var(--line); font-size: 13px;
+}
+.savedbtn:hover { border-color: var(--live); }
+.savedbtn.on { background: var(--live); color: #06170f; border-color: var(--live); font-weight: 600; }
+
+.row { display: flex; align-items: stretch; gap: 0; padding: 0; }
+.rowmain {
+  flex: 1; min-width: 0;
+  display: flex; align-items: center; gap: 11px;
+  padding: 10px 6px 10px 11px;
+  border: 0; border-radius: 7px 0 0 7px;
+  background: none; color: var(--text);
+  text-align: left;
+}
+.row:hover .rowmain { background: var(--field); }
+.row.on .rowmain { background: var(--field); box-shadow: inset 2px 0 0 var(--live); }
+
+.star {
+  flex: none; width: 36px;
+  border: 0; border-radius: 0 7px 7px 0;
+  background: none; color: var(--line);
+  font-size: 16px;
+}
+.row:hover .star { background: var(--field); color: var(--muted); }
+.star.on { color: var(--sand, #e8b04b); }
+.row:hover .star.on { color: var(--sand, #e8b04b); }
+
+.sheetactions { display: flex; gap: 8px; margin-top: 13px; }
+.chipbtn {
+  padding: 7px 13px; border-radius: 7px;
+  background: var(--field); color: var(--text);
+  border: 1px solid var(--line); font-size: 13px;
+}
+.chipbtn:hover { border-color: var(--live); }
+.chipbtn.on { color: #06170f; background: #e8b04b; border-color: #e8b04b; font-weight: 600; }
+.sharemsg { margin: 8px 0 0; color: var(--live); font-size: 12px; }

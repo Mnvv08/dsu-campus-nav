@@ -1,6 +1,9 @@
 {
   "campus": "Dayananda Sagar University — Harohalli",
-  "center": { "lat": 12.6606692, "lng": 77.4508399 },
+  "center": {
+    "lat": 12.6606692,
+    "lng": 77.4508399
+  },
   "updated": "2026-09-08",
   "places": [
     {
@@ -8,10 +11,13 @@
       "name": "DSU Main Campus",
       "name_kn": "ಡಿಎಸ್‌ಯು ಮುಖ್ಯ ಕ್ಯಾಂಪಸ್",
       "name_hi": "डीएसयू मुख्य परिसर",
-      "aliases": ["Main gate area", "Campus entrance"],
+      "aliases": [
+        "Main gate area",
+        "Campus entrance"
+      ],
       "category": "gate",
       "confidence": "confirmed",
-      "notes": Main entrance area from Kanakapura Road. Visitors and newcomers usually sign in here.
+      "notes": "Main entrance area from Kanakapura Road. Visitors and newcomers usually sign in here.",
       "lat": 12.6606692,
       "lng": 77.4508399
     },
@@ -20,10 +26,14 @@
       "name": "School of Engineering",
       "name_kn": "ಎಂಜಿನಿಯರಿಂಗ್ ಶಾಲೆ",
       "name_hi": "इंजीनियरिंग स्कूल",
-      "aliases": ["Engineering block", "SoE", "Main academic building"],
+      "aliases": [
+        "Engineering block",
+        "SoE",
+        "Main academic building"
+      ],
       "category": "academic",
       "confidence": "confirmed",
-      "notes": Main academic building. Admissions, fee payment and document submission for new students happen here.
+      "notes": "Main academic building. Admissions, fee payment and document submission for new students happen here.",
       "lat": 12.6620948,
       "lng": 77.4507423
     },
@@ -32,7 +42,10 @@
       "name": "S' Residence — DSU Boys Hostel",
       "name_kn": "ಎಸ್ ರೆಸಿಡೆನ್ಸ್ — ಬಾಯ್ಸ್ ಹಾಸ್ಟೆಲ್",
       "name_hi": "एस' रेजिडेंस — बॉयज़ हॉस्टल",
-      "aliases": ["Boys hostel", "S Residence"],
+      "aliases": [
+        "Boys hostel",
+        "S Residence"
+      ],
       "category": "hostel",
       "confidence": "confirmed",
       "notes": "Student accommodation branded S' Residence.",
@@ -44,7 +57,10 @@
       "name": "S' Residence Tower 3 — DSU Boys Hostel",
       "name_kn": "ಎಸ್ ರೆಸಿಡೆನ್ಸ್ ಟವರ್ 3 — ಬಾಯ್ಸ್ ಹಾಸ್ಟೆಲ್",
       "name_hi": "एस' रेजिडेंस टावर 3 — बॉयज़ हॉस्टल",
-      "aliases": ["Tower 3", "Boys hostel tower 3"],
+      "aliases": [
+        "Tower 3",
+        "Boys hostel tower 3"
+      ],
       "category": "hostel",
       "confidence": "confirmed",
       "notes": "A separate S' Residence tower a short walk from the main boys hostel building.",
@@ -56,7 +72,11 @@
       "name": "CDSIMER Hospital",
       "name_kn": "ಸಿಡಿಎಸ್‌ಐಎಂಇಆರ್ ಆಸ್ಪತ್ರೆ",
       "name_hi": "सीडीएसआईएमईआर अस्पताल",
-      "aliases": ["Hospital", "Medical college", "Dr Chandramma Dayananda Sagar Institute"],
+      "aliases": [
+        "Hospital",
+        "Medical college",
+        "Dr Chandramma Dayananda Sagar Institute"
+      ],
       "category": "medical",
       "confidence": "confirmed",
       "notes": "Campus hospital and medical college with over 450 beds, open 24 hours. For an emergency, contact campus security immediately rather than walking there.",
@@ -68,73 +88,104 @@
       "name": "DSU Cricket Stadium",
       "name_kn": "ಡಿಎಸ್‌ಯು ಕ್ರಿಕೆಟ್ ಕ್ರೀಡಾಂಗಣ",
       "name_hi": "डीएसयू क्रिकेट स्टेडियम",
-      "aliases": ["Cricket ground", "Sports ground"],
+      "aliases": [
+        "Cricket ground",
+        "Sports ground"
+      ],
       "category": "sports",
       "confidence": "confirmed",
       "notes": "Cricket ground, with a football turf, running track and courts for basketball and tennis nearby.",
       "lat": 12.661681,
       "lng": 77.4548268
     },
-
     {
       "id": "central-library",
       "name": "Central Library",
       "name_kn": "ಕೇಂದ್ರ ಗ್ರಂಥಾಲಯ",
       "name_hi": "केंद्रीय पुस्तकालय",
-      "aliases": ["Library", "ThinkCentre"],
+      "aliases": [
+        "Library",
+        "ThinkCentre"
+      ],
       "category": "library",
       "confidence": "guess",
       "notes": "Holds around 37,000 titles across roughly 190,000 volumes, with a digital access section called ThinkCentre.",
-      "lat": 12.660100,
-      "lng": 77.452900
+      "lat": 12.6601,
+      "lng": 77.4529
     },
     {
       "id": "hostel-girls",
       "name": "S' Residence — Girls Hostel",
       "name_kn": "ಎಸ್ ರೆಸಿಡೆನ್ಸ್ — ಗರ್ಲ್ಸ್ ಹಾಸ್ಟೆಲ್",
       "name_hi": "एस' रेजिडेंस — गर्ल्ज़ हॉस्टल",
-      "aliases": ["Girls hostel"],
+      "aliases": [
+        "Girls hostel"
+      ],
       "category": "hostel",
       "confidence": "guess",
       "notes": "Student accommodation branded S' Residence.",
-      "lat": 12.663800,
-      "lng": 77.448900
+      "lat": 12.6638,
+      "lng": 77.4489
     },
     {
       "id": "canteen-main",
       "name": "Main Canteen",
       "name_kn": "ಮುಖ್ಯ ಕ್ಯಾಂಟೀನ್",
       "name_hi": "मुख्य कैंटीन",
-      "aliases": ["Canteen", "Food court"],
+      "aliases": [
+        "Canteen",
+        "Food court"
+      ],
       "category": "food",
       "confidence": "guess",
       "notes": "Closest canteen to the Engineering Block. Canteens on this campus are spread out, so it's worth checking the walk time before heading over between classes.",
-      "lat": 12.659900,
-      "lng": 77.450900
+      "lat": 12.6599,
+      "lng": 77.4509
     },
     {
       "id": "admin-block",
       "name": "Administration Block",
       "name_kn": "ಆಡಳಿತ ಕಟ್ಟಡ",
       "name_hi": "प्रशासनिक भवन",
-      "aliases": ["Admin", "Registrar office"],
+      "aliases": [
+        "Admin",
+        "Registrar office"
+      ],
       "category": "admin",
       "confidence": "guess",
       "notes": "Registrar's office and general administration.",
-      "lat": 12.661300,
-      "lng": 77.452400
+      "lat": 12.6613,
+      "lng": 77.4524
     },
     {
       "id": "bus-stop",
       "name": "Campus Bus Point",
       "name_kn": "ಕ್ಯಾಂಪಸ್ ಬಸ್ ನಿಲ್ದಾಣ",
       "name_hi": "परिसर बस स्टॉप",
-      "aliases": ["Bus stop", "Shuttle point"],
+      "aliases": [
+        "Bus stop",
+        "Shuttle point"
+      ],
       "category": "transport",
       "confidence": "guess",
       "notes": "University bus pickup and drop point. Check timings with the transport office in advance.",
-      "lat": 12.658700,
-      "lng": 77.449700
+      "lat": 12.6587,
+      "lng": 77.4497
+    },
+    {
+      "id": "ai-building",
+      "name": "AI Building and Experience Centre",
+      "name_kn": "ಎಐ ಕಟ್ಟಡ ಮತ್ತು ಅನುಭವ ಕೇಂದ್ರ",
+      "name_hi": "एआई भवन और अनुभव केंद्र",
+      "aliases": [
+        "AI Centre",
+        "Artificial Intelligence building"
+      ],
+      "category": "academic",
+      "confidence": "guess",
+      "notes": "Dedicated building for the AI programme, with its own experience centre.",
+      "lat": 12.6615,
+      "lng": 77.4513
     }
   ]
 }
