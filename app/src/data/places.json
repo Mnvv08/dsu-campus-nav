@@ -140,9 +140,9 @@
       ],
       "category": "hostel",
       "confidence": "guess",
-      "notes": "Girls' hostel with 2-sharing rooms, identified by a student. Position estimated from its distance and direction relative to the confirmed Hostel Mess pin in the same photo — closer to accurate than a blind guess, but not GPS-exact.",
-      "lat": 12.6552,
-      "lng": 77.449
+      "notes": "Girls' hostel with 2-sharing rooms, identified by a student as sitting right next to S' Residence Tower 3. Position placed as a close offset from that confirmed pin rather than estimated across the whole frame.",
+      "lat": 12.6583,
+      "lng": 77.4475
     }
   ]
 }
