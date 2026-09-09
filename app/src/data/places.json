@@ -126,6 +126,21 @@
       "notes": "Dedicated building for the AI programme, with its own experience centre.",
       "lat": 12.6615,
       "lng": 77.4513
+    },
+    {
+      "id": "faculty-villa",
+      "name": "Faculty Villa",
+      "name_kn": "ಫ್ಯಾಕಲ್ಟಿ ವಿಲ್ಲಾ",
+      "name_hi": "फैकल्टी विला",
+      "aliases": [
+        "Staff housing",
+        "Faculty housing"
+      ],
+      "category": "landmark",
+      "confidence": "guess",
+      "notes": "Staff residential housing, identified from satellite imagery near the lake by a campus student. Exact position is an approximate placement near the hostel cluster and needs GPS confirmation.",
+      "lat": 12.659,
+      "lng": 77.4468
     }
   ]
 }
