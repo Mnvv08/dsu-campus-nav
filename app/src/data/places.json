@@ -140,9 +140,9 @@
       ],
       "category": "landmark",
       "confidence": "guess",
-      "notes": "Staff residential housing, identified from satellite imagery near the lake by a campus student. Exact position is an approximate placement near the hostel cluster and needs GPS confirmation.",
-      "lat": 12.659,
-      "lng": 77.4468
+      "notes": "Staff residential housing. Position anchored against the confirmed hostel blocks visible in the same screenshot — closer to correct than the first placement, but still not pixel-exact.",
+      "lat": 12.656,
+      "lng": 77.4501
     }
   ]
 }
