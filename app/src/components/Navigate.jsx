@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
 import { buildSteps, trackProgress, remainingDistance } from '../lib/navigate';
 import { distance, formatDistance, walkTime } from '../lib/categories';
-import { t, placeName } from '../lib/i18n';
+import { t, placeName, VOICE_LOCALE } from '../lib/i18n';
 
 const ARROWS = {
   left: '↰', right: '↱', 'sharp-left': '↺', 'sharp-right': '↻', 'u-turn': '⟲', straight: '↑'
@@ -11,8 +11,6 @@ const ARROWS = {
 // requested but the browser silently falls back to whatever it has if a
 // locale isn't installed, so this stays best-effort rather than a
 // feature the app depends on.
-const VOICE_LOCALE = { en: 'en-IN', kn: 'kn-IN', hi: 'hi-IN' };
-
 function say(text, lang) {
   if (!('speechSynthesis' in window) || !text) return;
   const u = new SpeechSynthesisUtterance(text);

@@ -42,7 +42,6 @@ export default function Shell() {
   return (
     <Home
       onEnter={() => go('#/map')}
-      onAsk={() => go('#/map', true)}
       placeCount={(campus.places ?? []).length}
       pathCount={(pathData.paths ?? []).length}
     />

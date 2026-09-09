@@ -132,6 +132,18 @@ const UI = {
     kn: 'ಅದು ಕಳುಹಿಸಲಾಗಲಿಲ್ಲ. ಸ್ವಲ್ಪ ಸಮಯದ ನಂತರ ಪ್ರಯತ್ನಿಸಿ.',
     hi: 'यह नहीं भेजा जा सका। थोड़ी देर बाद कोशिश करें।'
   },
+  micStart: { en: 'Speak your question', kn: 'ನಿಮ್ಮ ಪ್ರಶ್ನೆ ಹೇಳಿ', hi: 'अपना सवाल बोलें' },
+  micListening: { en: 'Listening…', kn: 'ಕೇಳುತ್ತಿದೆ…', hi: 'सुन रहा है…' },
+  micDenied: {
+    en: 'Microphone access was denied. You can still type your question.',
+    kn: 'ಮೈಕ್ರೊಫೋನ್ ಅನುಮತಿ ನಿರಾಕರಿಸಲಾಗಿದೆ. ನೀವು ಟೈಪ್ ಮಾಡಬಹುದು.',
+    hi: 'माइक्रोफ़ोन की अनुमति नहीं मिली। आप टाइप कर सकते हैं।'
+  },
+  micUnsupported: {
+    en: 'Voice input is not supported in this browser.',
+    kn: 'ಈ ಬ್ರೌಸರ್‌ನಲ್ಲಿ ಧ್ವನಿ ಇನ್‌ಪುಟ್ ಬೆಂಬಲವಿಲ್ಲ.',
+    hi: 'इस ब्राउज़र में आवाज़ इनपुट समर्थित नहीं है।'
+  },
   chatOffline: {
     en: 'No connection. The map still works offline, but questions need signal.',
     kn: 'ಸಂಪರ್ಕವಿಲ್ಲ. ನಕ್ಷೆ ಆಫ್‌ಲೈನ್‌ನಲ್ಲಿ ಕೆಲಸ ಮಾಡುತ್ತದೆ, ಆದರೆ ಪ್ರಶ್ನೆಗಳಿಗೆ ಸಿಗ್ನಲ್ ಬೇಕು.',
@@ -219,6 +231,8 @@ export function floorLabel(n, lang) {
   if (n === 0 || n === undefined || n === null) return t('ground', lang);
   return `${t('floor', lang)} ${n}`;
 }
+
+export const VOICE_LOCALE = { en: 'en-IN', kn: 'kn-IN', hi: 'hi-IN' };
 
 export function detectLanguage() {
   const saved = localStorage.getItem('dsu-lang');
