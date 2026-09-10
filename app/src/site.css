@@ -154,3 +154,28 @@
 
 /* Install prompt sits above the sticky nav on the landing page */
 .site .installbar { position: sticky; top: 0; z-index: 20; }
+
+/* Data coverage bar */
+.coveragebar {
+  width: 100%; height: 10px; border-radius: 999px;
+  background: var(--edge); overflow: hidden; margin: 4px 0 18px;
+}
+.coveragefill { height: 100%; background: var(--live); border-radius: 999px; transition: width .4s ease; }
+
+/* Changelog */
+.changelist { list-style: none; margin: 0; padding: 0; }
+.changelist li {
+  display: flex; justify-content: space-between; gap: 16px;
+  padding: 13px 0; border-top: 1px solid var(--edge);
+  font-size: 14px;
+}
+.changelist a { color: var(--paper); text-decoration: none; }
+.changelist a:hover { color: var(--live); }
+.changelist span { flex: none; color: var(--dim); font-size: 13px; }
+.changelogfail { color: var(--dim); font-size: 14px; }
+.changelogfail a { color: var(--live); }
+.changelogall {
+  display: inline-block; margin-top: 16px;
+  color: var(--live); font-size: 14px; text-decoration: none;
+}
+.changelogall:hover { text-decoration: underline; }

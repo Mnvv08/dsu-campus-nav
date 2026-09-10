@@ -1,5 +1,8 @@
 import { useEffect } from 'react';
 import InstallPrompt from './InstallPrompt';
+import Changelog from './Changelog';
+import { t } from '../lib/i18n';
+import campus from '../data/places.json';
 
 // The plan view is the most characteristic image in this subject's world:
 // blocks, a lake, a path, and a pin on the one you want. Drawn rather
@@ -67,6 +70,9 @@ function PlanView() {
 }
 
 export default function Home({ onEnter, placeCount, pathCount }) {
+  const confirmedCount = (campus.places ?? []).filter(p => p.confidence === 'confirmed').length;
+  const totalPlaces = (campus.places ?? []).length;
+  const coveragePct = totalPlaces ? Math.round((confirmedCount / totalPlaces) * 100) : 0;
   useEffect(() => {
     document.title = 'DSU Campus Navigator';
   }, []);
@@ -231,6 +237,19 @@ export default function Home({ onEnter, placeCount, pathCount }) {
           </a>
         </div>
       </section>
+
+      <section className="band">
+        <h2>{t('coverageTitle', 'en')}</h2>
+        <div className="coveragebar">
+          <div className="coveragefill" style={{ width: `${coveragePct}%` }} />
+        </div>
+        <p className="lede narrow">
+          {t('coverageConfirmed', 'en')(confirmedCount, totalPlaces)}
+        </p>
+        <p className="aside">{t('coverageHelp', 'en')}</p>
+      </section>
+
+      <Changelog lang="en" />
 
       </main>
 
