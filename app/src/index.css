@@ -364,10 +364,6 @@ button:focus-visible, .row:focus-visible { outline: 2px solid var(--live); outli
 }
 .placelabel::before { display: none; }
 
-/* Below the label zoom threshold, pins stay but names are hidden to
-   avoid overlapping clutter when many places are close together. */
-.map.labels-hidden .placelabel { display: none; }
-
 /* Legend — top-left, deliberately not bottom-left, since the place
    detail sheet also anchors bottom-left and the two would stack. */
 .legend {
@@ -712,3 +708,10 @@ button:focus-visible, .row:focus-visible { outline: 2px solid var(--live); outli
 }
 .tripminibtn.ghost { color: var(--muted); }
 .tripminibtn:hover { border-color: var(--live); }
+
+/* Labels hide only when they'd genuinely overlap another label on
+   screen, checked by real collision detection — not a blanket zoom
+   cutoff, since that hid every label on the very first view once the
+   dataset grew large enough that fitBounds naturally zooms out further
+   than any fixed threshold. */
+.placelabel.label-collision { display: none; }

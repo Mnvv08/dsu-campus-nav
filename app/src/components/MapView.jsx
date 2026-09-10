@@ -1,7 +1,29 @@
 import { useEffect, useRef } from 'react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
-import { CATEGORIES, colorFor, glyphFor, categoryLabel } from '../lib/categories';
+import { CATEGORIES, colorFor, glyphFor, categoryLabel, distance } from '../lib/categories';
+
+// Drops points sitting much further from the centroid than the rest of
+// the set — a simple, robust way to stop one distant place (a bus stand
+// in a neighbouring town, say) from dictating how zoomed-out the
+// default view is for everything else. Uses the median rather than the
+// mean specifically because a median doesn't get dragged by the very
+// outlier it's being used to detect.
+function excludeOutliers(places) {
+  const lat = places.reduce((s, p) => s + p.lat, 0) / places.length;
+  const lng = places.reduce((s, p) => s + p.lng, 0) / places.length;
+  const centroid = { lat, lng };
+
+  const dists = places.map(p => distance(centroid, p)).sort((a, b) => a - b);
+  const median = dists[Math.floor(dists.length / 2)];
+
+  // A place beyond 4x the typical distance from centroid is treated as
+  // an outlier. Falls back to the full set if that would strip out most
+  // of the places, rather than risk hiding real campus buildings.
+  const threshold = median * 4;
+  const kept = places.filter(p => distance(centroid, p) <= threshold);
+  return kept.length >= places.length / 2 ? kept : places;
+}
 
 // A drop-shaped pin with a category glyph inside, rather than a plain
 // dot. A parent unfamiliar with the app can tell a hostel pin from a
@@ -61,15 +83,53 @@ export default function MapView({ center, places, selected, onSelect, position, 
 
     L.control.zoom({ position: 'bottomright' }).addTo(m);
 
-    // Permanent labels help a first-time visitor, but at a zoomed-out
-    // view with many pins close together they overlap into noise. Hide
-    // them below a threshold rather than showing every name at once.
-    const LABEL_ZOOM = 17;
-    const syncLabelVisibility = () => {
-      holder.current?.classList.toggle('labels-hidden', m.getZoom() < LABEL_ZOOM);
+    // Permanent labels help a first-time visitor, but two pins close
+    // together on screen produce overlapping, unreadable text. A single
+    // fixed zoom cutoff doesn't actually solve this: campus places are
+    // spread over 162 acres, so fitting them all in view often lands at
+    // a zoom level well below any fixed threshold — hiding every label
+    // on the very first screen someone sees, defeating the entire point
+    // of permanent labels. Checking actual on-screen collisions instead
+    // means an isolated pin stays labelled at any zoom, and only pins
+    // that would genuinely overlap get hidden — and it keeps working
+    // correctly as more places are added and the map's natural default
+    // zoom keeps shifting, rather than needing the threshold re-tuned
+    // by hand every time the dataset grows.
+    const declutterLabels = () => {
+      const tooltips = Array.from(
+        holder.current?.querySelectorAll('.placelabel') ?? []
+      );
+
+      // A label already hidden by a previous run reports a zero-size
+      // rect at (0,0) from getBoundingClientRect — and two zero-size
+      // rects at the same origin register as "overlapping" each other,
+      // which would hide more labels on every subsequent check until
+      // everything collapses to hidden. Clearing every hide first
+      // forces real layout before measuring, so each check starts from
+      // accurate positions rather than compounding the last one's.
+      tooltips.forEach(el => el.classList.remove('label-collision'));
+
+      const rects = tooltips.map(el => el.getBoundingClientRect());
+      const overlaps = new Set();
+
+      for (let i = 0; i < rects.length; i++) {
+        for (let j = i + 1; j < rects.length; j++) {
+          const a = rects[i], b = rects[j];
+          const overlapping = !(
+            a.right < b.left || a.left > b.right ||
+            a.bottom < b.top || a.top > b.bottom
+          );
+          if (overlapping) { overlaps.add(i); overlaps.add(j); }
+        }
+      }
+
+      tooltips.forEach((el, i) => el.classList.toggle('label-collision', overlaps.has(i)));
     };
-    m.on('zoomend', syncLabelVisibility);
-    syncLabelVisibility();
+
+    // Labels move with the map on every frame during a zoom, so their
+    // final screen position — and thus whether they collide — is only
+    // settled once the zoom/pan animation actually finishes.
+    m.on('zoomend moveend', declutterLabels);
 
     map.current = m;
 
@@ -114,10 +174,21 @@ export default function MapView({ center, places, selected, onSelect, position, 
 
     // fitBounds throws on an empty set, and on a single point it zooms to
     // maximum, which loses all surrounding context.
-    if (places.length > 1) {
-      m.fitBounds(places.map(p => [p.lat, p.lng]), { padding: [50, 50], maxZoom: 17 });
-    } else if (places.length === 1) {
-      m.setView([places[0].lat, places[0].lng], 18);
+    //
+    // A single distant outlier — a town bus stand 3km away while every
+    // real campus building sits within 750m of the centroid — otherwise
+    // drags the default zoom out so far that the actual cluster of
+    // buildings squeezes into a small area and their labels collide
+    // with each other. That point is still fully on the map and fully
+    // findable through search; it's just excluded from deciding where
+    // the camera starts, since including it serves nobody's first look
+    // at the campus.
+    const framePlaces = places.length > 3 ? excludeOutliers(places) : places;
+
+    if (framePlaces.length > 1) {
+      m.fitBounds(framePlaces.map(p => [p.lat, p.lng]), { padding: [50, 50], maxZoom: 17 });
+    } else if (framePlaces.length === 1) {
+      m.setView([framePlaces[0].lat, framePlaces[0].lng], 18);
     }
   }, [places, onSelect]);
 
