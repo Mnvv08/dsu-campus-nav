@@ -250,7 +250,7 @@ export default function App({ startChat = false, onHome }) {
   useEffect(() => { setRouting(false); setNavOn(false); }, [selected]);
 
   return (
-    <div className="shell">
+    <main className="shell">
       {showTour && <TourGuide lang={lang} onClose={() => setShowTour(false)} />}
       <InstallPrompt lang={lang} />
       <EmergencyButton places={places} lang={lang} onShowHospital={select} />
@@ -580,6 +580,6 @@ export default function App({ startChat = false, onHome }) {
           </a>
         </div>
       )}
-    </div>
+    </main>
   );
 }

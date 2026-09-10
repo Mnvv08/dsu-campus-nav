@@ -28,10 +28,12 @@ button { font: inherit; cursor: pointer; }
 .leaflet-container { font-family: inherit; background: #0d1211; }
 .leaflet-control-attribution {
   background: rgba(13,18,17,.8) !important;
-  color: var(--muted) !important;
+  /* #9daaa5, not var(--muted) (#8d9c97) — the original sat at 3.97:1
+     against this control's background, short of WCAG AA. */
+  color: #9daaa5 !important;
   font-size: 10px;
 }
-.leaflet-control-attribution a { color: var(--muted) !important; }
+.leaflet-control-attribution a { color: #9daaa5 !important; }
 
 /* Markers */
 .pin {
@@ -527,11 +529,14 @@ button:focus-visible, .row:focus-visible { outline: 2px solid var(--live); outli
   position: absolute; right: 12px; bottom: 100px; z-index: 700;
   display: flex; align-items: center; gap: 6px;
   padding: 10px 14px; border-radius: 999px;
-  background: #d64545; color: #fff; border: none;
+  /* #c23a3a rather than the original #d64545 — the lighter red only
+     hit 4.37:1 contrast with white text, just under WCAG AA's 4.5:1
+     minimum for normal-size text. */
+  background: #c23a3a; color: #fff; border: none;
   font-size: 13px; font-weight: 600;
   box-shadow: 0 6px 18px rgba(0,0,0,.4);
 }
-.sosbtn:hover { background: #c23a3a; }
+.sosbtn:hover { background: #af2f2f; }
 .sosicon { font-size: 14px; }
 
 .sospanel {

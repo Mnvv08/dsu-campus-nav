@@ -95,7 +95,20 @@ export default function MapView({ center, places, selected, onSelect, position, 
           direction: 'top', offset: [0, -32],
           permanent: true, className: 'placelabel'
         })
-        .on('click', () => onSelect(p));
+        .on('click', () => onSelect(p))
+        .on('keypress', e => {
+          if (e.originalEvent.key === 'Enter' || e.originalEvent.key === ' ') onSelect(p);
+        });
+
+      // Leaflet marks every marker role="button" tabindex="0" — genuinely
+      // keyboard-focusable — but never gives it an accessible name of its
+      // own. The `alt` icon option only reaches Leaflet's default <img>
+      // icon; this app's pins are L.divIcon (a plain <div> with inline
+      // SVG), which `alt` silently does nothing for. The only way to
+      // label a divIcon marker is setting aria-label on its real DOM
+      // element directly, once Leaflet has actually created it.
+      mk.getElement()?.setAttribute('aria-label', p.name);
+
       markers.current.set(p.id, mk);
     });
 
@@ -153,6 +166,7 @@ export default function MapView({ center, places, selected, onSelect, position, 
         fillOpacity: 0.1
       }).addTo(m);
       you.current = L.marker(ll, { icon: youIcon, zIndexOffset: 900 }).addTo(m);
+      you.current.getElement()?.setAttribute('aria-label', 'Your current location');
     } else {
       you.current.setLatLng(ll);
       halo.current.setLatLng(ll).setRadius(accuracy ?? 0);

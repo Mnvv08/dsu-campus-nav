@@ -86,6 +86,7 @@ export default function Home({ onEnter, placeCount, pathCount }) {
         </div>
       </nav>
 
+      <main>
       <header className="hero">
         <div className="herotext">
           <h1>Nobody should get lost on their first day.</h1>
@@ -230,6 +231,8 @@ export default function Home({ onEnter, placeCount, pathCount }) {
           </a>
         </div>
       </section>
+
+      </main>
 
       <footer className="sitefoot">
         <p>
