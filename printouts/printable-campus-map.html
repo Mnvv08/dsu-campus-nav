@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>DSU Campus Navigator — Printable Map</title>
+<style>
+  body { margin: 0; background: #fff; font-family: "Inter", system-ui, -apple-system, sans-serif; color: #101413; }
+  .page { width: 210mm; min-height: 297mm; margin: 0 auto; padding: 14mm; box-sizing: border-box; }
+  .header { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 2px solid #101413; padding-bottom: 10px; margin-bottom: 18px; }
+  .header h1 { margin: 0; font-size: 26px; font-weight: 800; letter-spacing: -.02em; }
+  .header p { margin: 4px 0 0; font-size: 13px; color: #5a6663; }
+  .qrbox { text-align: center; }
+  .qrbox img { width: 26mm; height: 26mm; display: block; }
+  .qrbox span { font-size: 9px; color: #5a6663; }
+
+  .maparea { border: 1px solid #ccc; border-radius: 6px; padding: 12px; margin-bottom: 16px; background: #fafafa; }
+  .maplabel { font-size: 11px; color: #5a6663; text-transform: uppercase; letter-spacing: .04em; font-weight: 700; margin: 0 0 8px; }
+
+  .compass { text-align: center; font-size: 11px; color: #5a6663; margin-top: 4px; }
+
+  .legendgrid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 0 24px; }
+  table { border-collapse: collapse; width: 100%; font-size: 13px; }
+  td { padding: 5px 0; border-bottom: 1px solid #eee; }
+  td.num { width: 26px; font-weight: 700; }
+
+  .outliernote { font-size: 12px; color: #5a6663; margin: 10px 0 0; }
+
+  .footer { margin-top: 20px; padding-top: 14px; border-top: 2px solid #101413; }
+  .footer h2 { font-size: 13px; text-transform: uppercase; letter-spacing: .04em; margin: 0 0 8px; }
+  .calls { display: flex; gap: 18px; font-size: 13px; }
+  .calls b { display: block; font-size: 18px; }
+  .note { font-size: 11px; color: #5a6663; margin-top: 10px; line-height: 1.5; }
+
+  @media print { @page { size: A4; margin: 0; } }
+</style>
+</head>
+<body>
+<div class="page">
+  <div class="header">
+    <div>
+      <h1>DSU Campus Navigator</h1>
+      <p>Dayananda Sagar University — Devarakaggalahalli, Harohalli, Kanakapura Road</p>
+    </div>
+    <div class="qrbox">
+      <img src="data:image/png;base64,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" alt="QR code to the live map">
+      <span>Scan when you have signal</span>
+    </div>
+  </div>
+
+  <div class="maparea">
+    <p class="maplabel">Campus layout — schematic, not to satellite scale</p>
+    <svg viewBox="0 0 640 640" style="width:100%; height:auto;">
+      
+    <g>
+      <circle cx="339" cy="154" r="15" fill="#e8b04b" stroke="#101413" stroke-width="2"/>
+      <text x="339" y="159" text-anchor="middle" font-size="14" font-weight="700" fill="#101413">1</text>
+    </g>
+    <g>
+      <circle cx="333" cy="70" r="15" fill="#4ee39a" stroke="#101413" stroke-width="2"/>
+      <text x="333" y="75" text-anchor="middle" font-size="14" font-weight="700" fill="#101413">2</text>
+    </g>
+    <g>
+      <circle cx="149" cy="321" r="15" fill="#c98bff" stroke="#101413" stroke-width="2"/>
+      <text x="149" y="326" text-anchor="middle" font-size="14" font-weight="700" fill="#101413">3</text>
+    </g>
+    <g>
+      <circle cx="129" cy="305" r="15" fill="#c98bff" stroke="#101413" stroke-width="2"/>
+      <text x="129" y="310" text-anchor="middle" font-size="14" font-weight="700" fill="#101413">4</text>
+    </g>
+    <g>
+      <circle cx="259" cy="130" r="15" fill="#ff7b7b" stroke="#101413" stroke-width="2"/>
+      <text x="259" y="135" text-anchor="middle" font-size="14" font-weight="700" fill="#101413">5</text>
+    </g>
+    <g>
+      <circle cx="570" cy="94" r="15" fill="#7de37d" stroke="#101413" stroke-width="2"/>
+      <text x="570" y="99" text-anchor="middle" font-size="14" font-weight="700" fill="#101413">6</text>
+    </g>
+    <g>
+      <circle cx="70" cy="335" r="15" fill="#ff9a6b" stroke="#101413" stroke-width="2"/>
+      <text x="70" y="340" text-anchor="middle" font-size="14" font-weight="700" fill="#101413">7</text>
+    </g>
+    <g>
+      <circle cx="366" cy="105" r="15" fill="#4ee39a" stroke="#101413" stroke-width="2"/>
+      <text x="366" y="110" text-anchor="middle" font-size="14" font-weight="700" fill="#101413">8</text>
+    </g>
+    <g>
+      <circle cx="145" cy="294" r="15" fill="#c98bff" stroke="#101413" stroke-width="2"/>
+      <text x="145" y="299" text-anchor="middle" font-size="14" font-weight="700" fill="#101413">9</text>
+    </g>
+    </svg>
+    <p class="compass">↑ North is up</p>
+  </div>
+
+  <div class="legendgrid">
+    <table><tr><td class="num">1</td><td>DSU Main Campus</td></tr><tr><td class="num">2</td><td>School of Engineering</td></tr><tr><td class="num">3</td><td>S' Residence — DSU Boys Hostel</td></tr><tr><td class="num">4</td><td>S' Residence Tower 3 — DSU Boys Hostel</td></tr><tr><td class="num">5</td><td>CDSIMER Hospital</td></tr></table>
+    <table><tr><td class="num">6</td><td>DSU Cricket Stadium</td></tr><tr><td class="num">7</td><td>Hostel Mess</td></tr><tr><td class="num">8</td><td>AI Building and Experience Centre *</td></tr><tr><td class="num">9</td><td>Girls Hostel (2 Sharing) *</td></tr></table>
+  </div>
+
+  <p class="outliernote">Not shown on the map above — too far to draw to scale: Harohalli Bus Stand (~2.8 km away).</p>
+  <p class="note">* Position not independently verified — treat as approximate.</p>
+
+  <div class="footer">
+    <h2>In an emergency</h2>
+    <div class="calls">
+      <div><b>112</b>All emergencies</div>
+      <div><b>108</b>Ambulance</div>
+      <div><b>100</b>Police</div>
+      <div><b>+91 80 4909 2924</b>University main line (9am–4:30pm weekdays)</div>
+    </div>
+    <p class="note">This map is community-built by a student and is not an official university document. Report corrections at github.com/Mnvv08/dsu-campus-nav/issues</p>
+  </div>
+</div>
+</body>
+</html>
