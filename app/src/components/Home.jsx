@@ -1,6 +1,5 @@
 import { useEffect } from 'react';
 import InstallPrompt from './InstallPrompt';
-import Changelog from './Changelog';
 import { t } from '../lib/i18n';
 import campus from '../data/places.json';
 
@@ -248,8 +247,6 @@ export default function Home({ onEnter, placeCount, pathCount }) {
         </p>
         <p className="aside">{t('coverageHelp', 'en')}</p>
       </section>
-
-      <Changelog lang="en" />
 
       </main>
 
