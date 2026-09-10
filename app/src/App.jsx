@@ -5,6 +5,7 @@ import Navigate from './components/Navigate';
 import InstallPrompt from './components/InstallPrompt';
 import EmergencyButton from './components/EmergencyButton';
 import TripPlanner from './components/TripPlanner';
+import TourGuide, { hasSeenTour } from './components/TourGuide';
 import { getSaved, toggleSaved } from './lib/saved';
 import campus from './data/places.json';
 import tasks from './data/tasks.json';
@@ -84,6 +85,7 @@ export default function App({ startChat = false, onHome }) {
   const [tripStops, setTripStops] = useState([]);
   const [tripOpen, setTripOpen] = useState(false);
   const [tripRoute, setTripRoute] = useState(null);
+  const [showTour, setShowTour] = useState(() => !hasSeenTour());
   const [showSaved, setShowSaved] = useState(false);
   const [shareMsg, setShareMsg] = useState(null);
   const [activeTask, setActiveTask] = useState(null);
@@ -249,6 +251,7 @@ export default function App({ startChat = false, onHome }) {
 
   return (
     <div className="shell">
+      {showTour && <TourGuide lang={lang} onClose={() => setShowTour(false)} />}
       <InstallPrompt lang={lang} />
       <EmergencyButton places={places} lang={lang} onShowHospital={select} />
       {tripStops.length > 0 && !tripOpen && (
@@ -286,6 +289,9 @@ export default function App({ startChat = false, onHome }) {
           {onHome && (
             <button className="backhome" onClick={onHome}>← Back to overview</button>
           )}
+          <button className="tourlink" onClick={() => setShowTour(true)}>
+            {t('tourReplay', lang)}
+          </button>
           <div className="langs" role="group" aria-label="Language">
             {LANGUAGES.map(l => (
               <button
