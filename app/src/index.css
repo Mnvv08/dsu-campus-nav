@@ -682,3 +682,33 @@ button:focus-visible, .row:focus-visible { outline: 2px solid var(--live); outli
 @media (max-width: 760px) {
   .tourcard { padding: 28px 22px 22px; }
 }
+
+/* Saved trips */
+.tripsavebtn {
+  width: 100%; margin-top: 10px; padding: 9px;
+  border-radius: 7px; background: var(--field); color: var(--live);
+  border: 1px solid var(--line); font-size: 13px; font-weight: 600;
+}
+.tripsavebtn:hover { border-color: var(--live); }
+
+.tripsaveform { margin-top: 10px; }
+.tripsaveform label { display: block; font-size: 12px; color: var(--muted); margin-bottom: 6px; }
+.tripsaverow { display: flex; gap: 8px; }
+.tripsaverow input {
+  flex: 1; min-width: 0; padding: 9px 11px;
+  background: var(--field); color: var(--text);
+  border: 1px solid var(--line); border-radius: 7px; font: inherit; font-size: 13px;
+}
+.tripsaverow input:focus { outline: 2px solid var(--live); outline-offset: -1px; border-color: transparent; }
+.tripsaverow .primary { flex: none; padding: 9px 14px; border-radius: 7px; }
+
+.mytripslist { margin-top: 18px; padding-top: 14px; border-top: 1px solid var(--line); }
+.mytrip { display: flex; align-items: center; gap: 8px; padding: 8px 0; }
+.mytripname { flex: 1; min-width: 0; font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mytripcount { flex: none; color: var(--muted); font-size: 11px; background: var(--field); padding: 1px 7px; border-radius: 999px; }
+.tripminibtn {
+  flex: none; padding: 5px 10px; border-radius: 6px;
+  background: var(--field); color: var(--live); border: 1px solid var(--line); font-size: 12px;
+}
+.tripminibtn.ghost { color: var(--muted); }
+.tripminibtn:hover { border-color: var(--live); }

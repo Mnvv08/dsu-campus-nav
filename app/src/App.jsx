@@ -7,6 +7,7 @@ import EmergencyButton from './components/EmergencyButton';
 import TripPlanner from './components/TripPlanner';
 import TourGuide, { hasSeenTour } from './components/TourGuide';
 import { getSaved, toggleSaved } from './lib/saved';
+import { getSavedTrips } from './lib/savedTrips';
 import campus from './data/places.json';
 import tasks from './data/tasks.json';
 import pathData from './data/paths.json';
@@ -85,6 +86,12 @@ export default function App({ startChat = false, onHome }) {
   const [tripStops, setTripStops] = useState([]);
   const [tripOpen, setTripOpen] = useState(false);
   const [tripRoute, setTripRoute] = useState(null);
+  // Trip access has to survive a page reload even with zero currently
+  // selected stops — otherwise a saved trip becomes unreachable the
+  // moment the tab refreshes, which defeats the entire point of saving
+  // one. Recomputed whenever the panel opens/closes so a freshly saved
+  // or deleted trip is reflected immediately.
+  const [hasSavedTrips, setHasSavedTrips] = useState(() => getSavedTrips().length > 0);
   const [showTour, setShowTour] = useState(() => !hasSeenTour());
   const [showSaved, setShowSaved] = useState(false);
   const [shareMsg, setShareMsg] = useState(null);
@@ -254,9 +261,9 @@ export default function App({ startChat = false, onHome }) {
       {showTour && <TourGuide lang={lang} onClose={() => setShowTour(false)} />}
       <InstallPrompt lang={lang} />
       <EmergencyButton places={places} lang={lang} onShowHospital={select} />
-      {tripStops.length > 0 && !tripOpen && (
+      {(tripStops.length > 0 || hasSavedTrips) && !tripOpen && (
         <button className="tripbtn" onClick={() => setTripOpen(true)}>
-          {t('tripBtn', lang)} ({tripStops.length})
+          {t('tripBtn', lang)}{tripStops.length > 0 && ` (${tripStops.length})`}
         </button>
       )}
       {tripOpen && (
@@ -264,11 +271,13 @@ export default function App({ startChat = false, onHome }) {
           graph={graph}
           origin={position}
           stops={tripStops}
+          places={places}
           lang={lang}
           onRemove={removeTripStop}
           onClear={clearTrip}
           onShowRoute={showTripRoute}
-          onClose={() => setTripOpen(false)}
+          onClose={() => { setTripOpen(false); setHasSavedTrips(getSavedTrips().length > 0); }}
+          onLoadTrip={setTripStops}
         />
       )}
       <MapView
