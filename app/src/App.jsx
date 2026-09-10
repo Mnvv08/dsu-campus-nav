@@ -4,6 +4,7 @@ import Chat from './components/Chat';
 import Navigate from './components/Navigate';
 import InstallPrompt from './components/InstallPrompt';
 import EmergencyButton from './components/EmergencyButton';
+import TripPlanner from './components/TripPlanner';
 import { getSaved, toggleSaved } from './lib/saved';
 import campus from './data/places.json';
 import tasks from './data/tasks.json';
@@ -80,6 +81,9 @@ export default function App({ startChat = false, onHome }) {
   const [chatOpen, setChatOpen] = useState(startChat);
   const [navOn, setNavOn] = useState(false);
   const [saved, setSaved] = useState(getSaved);
+  const [tripStops, setTripStops] = useState([]);
+  const [tripOpen, setTripOpen] = useState(false);
+  const [tripRoute, setTripRoute] = useState(null);
   const [showSaved, setShowSaved] = useState(false);
   const [shareMsg, setShareMsg] = useState(null);
   const [activeTask, setActiveTask] = useState(null);
@@ -134,6 +138,33 @@ export default function App({ startChat = false, onHome }) {
 
   const toggleSave = useCallback(id => {
     setSaved(prev => toggleSaved(id, prev));
+  }, []);
+
+  const inTrip = useCallback(id => tripStops.some(s => s.id === id), [tripStops]);
+
+  const toggleTrip = useCallback(place => {
+    setTripStops(prev =>
+      prev.some(s => s.id === place.id)
+        ? prev.filter(s => s.id !== place.id)
+        : [...prev, place]
+    );
+  }, []);
+
+  const removeTripStop = useCallback(place => {
+    setTripStops(prev => prev.filter(s => s.id !== place.id));
+  }, []);
+
+  const clearTrip = useCallback(() => {
+    setTripStops([]);
+    setTripRoute(null);
+    setTripOpen(false);
+  }, []);
+
+  // A planned trip is several legs end to end; flatten them into one
+  // polyline so the map can draw the whole journey as a single route.
+  const showTripRoute = useCallback(plan => {
+    setTripRoute(plan.legs.flatMap(leg => leg.coords));
+    setTripOpen(false);
   }, []);
 
   const share = useCallback(async (place) => {
@@ -220,6 +251,23 @@ export default function App({ startChat = false, onHome }) {
     <div className="shell">
       <InstallPrompt lang={lang} />
       <EmergencyButton places={places} lang={lang} onShowHospital={select} />
+      {tripStops.length > 0 && !tripOpen && (
+        <button className="tripbtn" onClick={() => setTripOpen(true)}>
+          {t('tripBtn', lang)} ({tripStops.length})
+        </button>
+      )}
+      {tripOpen && (
+        <TripPlanner
+          graph={graph}
+          origin={position}
+          stops={tripStops}
+          lang={lang}
+          onRemove={removeTripStop}
+          onClear={clearTrip}
+          onShowRoute={showTripRoute}
+          onClose={() => setTripOpen(false)}
+        />
+      )}
       <MapView
         center={campus.center}
         places={visible}
@@ -227,7 +275,7 @@ export default function App({ startChat = false, onHome }) {
         onSelect={select}
         position={position}
         accuracy={accuracy}
-        routeLine={walk?.coords}
+        routeLine={tripRoute ?? walk?.coords}
         lang={lang}
       />
 
@@ -393,6 +441,14 @@ export default function App({ startChat = false, onHome }) {
                   >
                     ★
                   </button>
+                  <button
+                    className={inTrip(p.id) ? 'tripstar on' : 'tripstar'}
+                    onClick={() => toggleTrip(p)}
+                    aria-label={inTrip(p.id) ? t('tripRemove', lang) : t('tripAdd', lang)}
+                    aria-pressed={inTrip(p.id)}
+                  >
+                    +
+                  </button>
                 </div>
               );
             })
@@ -439,6 +495,12 @@ export default function App({ startChat = false, onHome }) {
             </button>
             <button className="chipbtn" onClick={() => share(selected)}>
               ↗ {t('share', lang)}
+            </button>
+            <button
+              className={inTrip(selected.id) ? 'chipbtn on' : 'chipbtn'}
+              onClick={() => toggleTrip(selected)}
+            >
+              + {t('tripAdd', lang)}
             </button>
           </div>
           {shareMsg && <p className="sharemsg">{shareMsg}</p>}
