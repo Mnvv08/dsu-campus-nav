@@ -143,6 +143,26 @@
       "notes": "Girls' hostel with 2-sharing rooms, identified by a student as sitting right next to S' Residence Tower 3. Position placed as a close offset from that confirmed pin rather than estimated across the whole frame.",
       "lat": 12.6583,
       "lng": 77.4475
+    },
+    {
+      "id": "harohalli-bus-stand",
+      "name": "Harohalli Bus Stand",
+      "name_kn": "ಹಾರೋಹಳ್ಳಿ ಬಸ್ ನಿಲ್ದಾಣ",
+      "name_hi": "हारोहल्ली बस स्टैंड",
+      "name_ta": "ஹாரோஹள்ளி பேருந்து நிலையம்",
+      "name_te": "హరోహళ్లి బస్ స్టాండ్",
+      "name_ml": "ഹാരോഹള്ളി ബസ് സ്റ്റാൻഡ്",
+      "name_gu": "હારોહલ્લી બસ સ્ટેન્ડ",
+      "aliases": [
+        "Bus stand",
+        "Town bus stop",
+        "Harohalli gaon bus stop"
+      ],
+      "category": "transport",
+      "confidence": "confirmed",
+      "notes": "The public bus stand in Harohalli town, about 3 km from the campus — not an on-campus stop. Direct buses run from Bengaluru here; from campus, an auto or shared auto covers the last stretch.",
+      "lat": 12.680144,
+      "lng": 77.469547
     }
   ]
 }
