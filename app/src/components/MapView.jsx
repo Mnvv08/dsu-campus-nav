@@ -1,14 +1,33 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState, useCallback, useMemo } from 'react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
-import { CATEGORIES, colorFor, glyphFor, categoryLabel, distance } from '../lib/categories';
+import { colorFor, iconFor, categoryLabel, distance, LABEL_PRIORITY } from '../lib/categories';
+import { t } from '../lib/i18n';
+import pathData from '../data/paths.json';
+import { createVectorLayer } from '../lib/vectorBasemap';
+
+const ESRI = 'https://server.arcgisonline.com/ArcGIS/rest/services';
+
+// Two basemaps. "map" is a clean vector map (roads, building footprints,
+// place names) and is the default, since it stays sharp at any zoom and
+// reads like a professional navigation app. "satellite" is kept as an
+// option for people who want to match what they see on the ground.
+const BASEMAPS = {
+  map: { type: 'vector', maxZoom: 20, light: true },
+  satellite: {
+    type: 'raster',
+    url: `${ESRI}/World_Imagery/MapServer/tile/{z}/{y}/{x}`,
+    attribution: 'Imagery &copy; Esri, Maxar',
+    maxNativeZoom: 18,
+    maxZoom: 18,
+    light: false
+  }
+};
 
 // Drops points sitting much further from the centroid than the rest of
-// the set — a simple, robust way to stop one distant place (a bus stand
-// in a neighbouring town, say) from dictating how zoomed-out the
-// default view is for everything else. Uses the median rather than the
-// mean specifically because a median doesn't get dragged by the very
-// outlier it's being used to detect.
+// the set, so one distant place (a bus stand in a neighbouring town) does
+// not dictate how zoomed-out the default view is. Uses the median, which
+// is not dragged by the very outlier it is meant to detect.
 function excludeOutliers(places) {
   const lat = places.reduce((s, p) => s + p.lat, 0) / places.length;
   const lng = places.reduce((s, p) => s + p.lng, 0) / places.length;
@@ -17,34 +36,29 @@ function excludeOutliers(places) {
   const dists = places.map(p => distance(centroid, p)).sort((a, b) => a - b);
   const median = dists[Math.floor(dists.length / 2)];
 
-  // A place beyond 4x the typical distance from centroid is treated as
-  // an outlier. Falls back to the full set if that would strip out most
-  // of the places, rather than risk hiding real campus buildings.
-  const threshold = median * 4;
-  const kept = places.filter(p => distance(centroid, p) <= threshold);
+  const kept = places.filter(p => distance(centroid, p) <= median * 4);
   return kept.length >= places.length / 2 ? kept : places;
 }
 
-// A drop-shaped pin with a category glyph inside, rather than a plain
-// dot. A parent unfamiliar with the app can tell a hostel pin from a
-// medical pin at a glance instead of needing to click every marker to
-// find out what it is.
-const placeIcon = (color, glyph, active) =>
-  L.divIcon({
+// A round badge with a consistent line icon, rather than an emoji. Emoji
+// render differently on every phone and are often illegible at pin size.
+// Places that are not confirmed get a dashed ring and a "?" so the map
+// itself is honest about uncertainty, not only the detail sheet.
+const placeIcon = (p, active) => {
+  const unverified = p.confidence && p.confidence !== 'confirmed';
+  return L.divIcon({
     className: '',
     html: `
-      <span class="pin${active ? ' pin-active' : ''}" style="--pin:${color}">
-        <svg viewBox="0 0 28 34" width="30" height="36">
-          <path d="M14 0C6.3 0 0 6.3 0 14c0 9.8 12.2 18.8 13.2 19.5.5.4 1.1.4 1.6 0C15.8 32.8 28 23.8 28 14 28 6.3 21.7 0 14 0z"
-                fill="var(--pin)" stroke="#101413" stroke-width="1.5"/>
-          <circle cx="14" cy="13" r="9.5" fill="#101413" opacity=".92"/>
-          <text x="14" y="17.5" font-size="12" text-anchor="middle">${glyph}</text>
-        </svg>
+      <span class="pin2${active ? ' pin2-active' : ''}${unverified ? ' pin2-unverified' : ''}"
+            style="--pin:${colorFor(p.category)}">
+        <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="#fff"
+             stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">${iconFor(p.category)}</svg>
+        ${unverified ? '<i class="pin2-q">?</i>' : ''}
       </span>`,
-    iconSize: [30, 36],
-    iconAnchor: [15, 34],
-    tooltipAnchor: [0, -30]
+    iconSize: [34, 34],
+    iconAnchor: [17, 17]
   });
+};
 
 const youIcon = L.divIcon({
   className: '',
@@ -53,88 +67,162 @@ const youIcon = L.divIcon({
   iconAnchor: [9, 9]
 });
 
+const startIcon = L.divIcon({
+  className: '',
+  html: '<span class="routedot routedot-start"></span>',
+  iconSize: [16, 16],
+  iconAnchor: [8, 8]
+});
+
+const endIcon = L.divIcon({
+  className: '',
+  html: `<span class="routedot routedot-end">
+           <svg viewBox="0 0 24 24" width="14" height="14" fill="#06170f">
+             <path d="M6 3v18h2v-7h9l-2-4 2-4H8V3z"/>
+           </svg>
+         </span>`,
+  iconSize: [26, 26],
+  iconAnchor: [13, 13]
+});
+
+// Normalises both accepted path formats (bare array, or { points, steps }).
+const normalisePath = raw => (Array.isArray(raw) ? { points: raw, steps: false } : raw);
+
 export default function MapView({ center, places, selected, onSelect, position, accuracy, routeLine, lang = 'en' }) {
   const holder = useRef(null);
   const map = useRef(null);
+  const base = useRef(null);
   const markers = useRef(new Map());
+  const placeById = useRef(new Map());
   const you = useRef(null);
   const halo = useRef(null);
   const line = useRef(null);
+  const network = useRef(null);
+  const frameRef = useRef(() => {});
+
+  const [basemap, setBasemap] = useState('map');
+  const [showPaths, setShowPaths] = useState(true);
 
   // Set the map up once.
   useEffect(() => {
-    // Capped lower than Esri's nominal max. This is a rural area, and
-    // past a certain zoom Esri simply has no photography for parts of
-    // it — not a slow load, an actual gap that renders as a "Map data
-    // not yet available" placeholder tile. Capping the app's zoom keeps
-    // users from ever scrolling into that gap rather than trying to
-    // detect and explain it after the fact.
-    const m = L.map(holder.current, { zoomControl: false, maxZoom: 18 })
+    // Capped below Esri's nominal max: this is a rural area, and past a
+    // certain zoom Esri has no photography for parts of it. Capping the
+    // zoom keeps users from scrolling into that gap.
+    const m = L.map(holder.current, { zoomControl: false, maxZoom: 18, minZoom: 13 })
       .setView([center.lat, center.lng], 16);
 
-    L.tileLayer(
-      'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
-      {
-        maxZoom: 18,
-        maxNativeZoom: 18,
-        attribution: 'Imagery &copy; Esri, Maxar'
-      }
-    ).addTo(m);
-
     L.control.zoom({ position: 'bottomright' }).addTo(m);
+    L.control.scale({ position: 'bottomleft', imperial: false, maxWidth: 110 }).addTo(m);
 
-    // Permanent labels help a first-time visitor, but two pins close
-    // together on screen produce overlapping, unreadable text. A single
-    // fixed zoom cutoff doesn't actually solve this: campus places are
-    // spread over 162 acres, so fitting them all in view often lands at
-    // a zoom level well below any fixed threshold — hiding every label
-    // on the very first screen someone sees, defeating the entire point
-    // of permanent labels. Checking actual on-screen collisions instead
-    // means an isolated pin stays labelled at any zoom, and only pins
-    // that would genuinely overlap get hidden — and it keeps working
-    // correctly as more places are added and the map's natural default
-    // zoom keeps shifting, rather than needing the threshold re-tuned
-    // by hand every time the dataset grows.
+    // Permanent labels help a first-time visitor, but labels that collide
+    // are unreadable. Greedy, priority-ordered placement: the most
+    // important label (selected, then gates/admin/academic) is kept, and a
+    // lower-priority label is hidden only if it would overlap one already
+    // shown. Hiding BOTH overlapping labels, as before, could blank out
+    // two important places at once.
     const declutterLabels = () => {
-      const tooltips = Array.from(
-        holder.current?.querySelectorAll('.placelabel') ?? []
-      );
+      const items = [];
+      markers.current.forEach((mk, id) => {
+        const el = mk.getTooltip()?.getElement();
+        if (el) items.push({ el, id });
+      });
 
-      // A label already hidden by a previous run reports a zero-size
-      // rect at (0,0) from getBoundingClientRect — and two zero-size
-      // rects at the same origin register as "overlapping" each other,
-      // which would hide more labels on every subsequent check until
-      // everything collapses to hidden. Clearing every hide first
-      // forces real layout before measuring, so each check starts from
-      // accurate positions rather than compounding the last one's.
-      tooltips.forEach(el => el.classList.remove('label-collision'));
+      // Clear earlier hides first so every rect is measured from real layout.
+      items.forEach(({ el }) => el.classList.remove('label-collision'));
 
-      const rects = tooltips.map(el => el.getBoundingClientRect());
-      const overlaps = new Set();
+      const prio = id => {
+        const p = placeById.current.get(id);
+        if (!p) return 0;
+        if (m._selectedId === id) return 100;
+        return (LABEL_PRIORITY[p.category] ?? 3) + (p.confidence === 'confirmed' ? 0.5 : 0);
+      };
 
-      for (let i = 0; i < rects.length; i++) {
-        for (let j = i + 1; j < rects.length; j++) {
-          const a = rects[i], b = rects[j];
-          const overlapping = !(
-            a.right < b.left || a.left > b.right ||
-            a.bottom < b.top || a.top > b.bottom
-          );
-          if (overlapping) { overlaps.add(i); overlaps.add(j); }
-        }
-      }
+      items.sort((a, b) => prio(b.id) - prio(a.id));
 
-      tooltips.forEach((el, i) => el.classList.toggle('label-collision', overlaps.has(i)));
+      const placed = [];
+      items.forEach(({ el }) => {
+        const r = el.getBoundingClientRect();
+        const pad = 3;
+        const clash = placed.some(o =>
+          !(r.right + pad < o.left || r.left - pad > o.right ||
+            r.bottom + pad < o.top || r.top - pad > o.bottom)
+        );
+        if (clash) el.classList.add('label-collision');
+        else placed.push(r);
+      });
     };
 
-    // Labels move with the map on every frame during a zoom, so their
-    // final screen position — and thus whether they collide — is only
-    // settled once the zoom/pan animation actually finishes.
     m.on('zoomend moveend', declutterLabels);
+    m._declutter = declutterLabels;
 
     map.current = m;
-
     return () => m.remove();
   }, [center.lat, center.lng]);
+
+  // Basemap switching. The vector renderer loads on demand, so this is
+  // async; the cancelled flag stops a slow load from landing after the
+  // person has already switched back.
+  useEffect(() => {
+    const m = map.current;
+    if (!m) return;
+    const cfg = BASEMAPS[basemap];
+    let cancelled = false;
+
+    const install = layer => {
+      if (cancelled) return;
+      if (base.current) m.removeLayer(base.current);
+      base.current = layer.addTo(m);
+      base.current.bringToBack?.();
+      m.setMaxZoom(cfg.maxZoom);
+      m.getContainer().classList.toggle('map-light', cfg.light);
+    };
+
+    if (cfg.type === 'raster') {
+      install(L.tileLayer(cfg.url, {
+        maxZoom: cfg.maxZoom,
+        maxNativeZoom: cfg.maxNativeZoom,
+        attribution: cfg.attribution
+      }));
+    } else {
+      createVectorLayer().then(install).catch(() => {
+        // Offline or blocked: fall back to satellite rather than a blank map.
+        if (!cancelled) setBasemap('satellite');
+      });
+    }
+
+    return () => { cancelled = true; };
+  }, [basemap, center.lat, center.lng]);
+
+  // Draw the traced footpath network. Showing it explains why a route goes
+  // where it does, and shows at a glance how much of campus is traced.
+  useEffect(() => {
+    const m = map.current;
+    if (!m) return;
+    if (network.current) { m.removeLayer(network.current); network.current = null; }
+    if (!showPaths) return;
+
+    const light = BASEMAPS[basemap].light;
+    const layers = [];
+    (pathData.paths ?? []).forEach(raw => {
+      const { points, steps } = normalisePath(raw);
+      if (!points || points.length < 2) return;
+      // On a light map: blue dashes with a white halo. On satellite:
+      // white dashes with a dark halo.
+      layers.push(L.polyline(points, {
+        color: light ? '#ffffff' : '#06170f',
+        weight: 6, opacity: light ? .9 : .35, interactive: false
+      }));
+      layers.push(L.polyline(points, {
+        color: steps ? '#e8890b' : (light ? '#1a73e8' : '#ffffff'),
+        weight: 2.5,
+        opacity: .95,
+        dashArray: steps ? '2 6' : '6 6',
+        lineCap: 'round',
+        interactive: false
+      }));
+    });
+    network.current = L.layerGroup(layers).addTo(m);
+  }, [showPaths, basemap, center.lat, center.lng]);
 
   // Redraw markers whenever the dataset changes.
   useEffect(() => {
@@ -143,16 +231,14 @@ export default function MapView({ center, places, selected, onSelect, position, 
 
     markers.current.forEach(mk => m.removeLayer(mk));
     markers.current.clear();
+    placeById.current = new Map(places.map(p => [p.id, p]));
 
     places.forEach(p => {
-      const mk = L.marker([p.lat, p.lng], {
-        icon: placeIcon(colorFor(p.category), glyphFor(p.category))
-      })
+      const mk = L.marker([p.lat, p.lng], { icon: placeIcon(p), riseOnHover: true })
         .addTo(m)
-        // permanent: the name is always visible, not hidden behind a
-        // hover a first-time visitor has no reason to try.
+        // Always-visible name, below the pin so it never covers the icon.
         .bindTooltip(p.name, {
-          direction: 'top', offset: [0, -32],
+          direction: 'bottom', offset: [0, 14],
           permanent: true, className: 'placelabel'
         })
         .on('click', () => onSelect(p))
@@ -160,52 +246,50 @@ export default function MapView({ center, places, selected, onSelect, position, 
           if (e.originalEvent.key === 'Enter' || e.originalEvent.key === ' ') onSelect(p);
         });
 
-      // Leaflet marks every marker role="button" tabindex="0" — genuinely
-      // keyboard-focusable — but never gives it an accessible name of its
-      // own. The `alt` icon option only reaches Leaflet's default <img>
-      // icon; this app's pins are L.divIcon (a plain <div> with inline
-      // SVG), which `alt` silently does nothing for. The only way to
-      // label a divIcon marker is setting aria-label on its real DOM
-      // element directly, once Leaflet has actually created it.
+      // divIcon markers have no accessible name unless set on the element.
       mk.getElement()?.setAttribute('aria-label', p.name);
 
       markers.current.set(p.id, mk);
     });
 
-    // fitBounds throws on an empty set, and on a single point it zooms to
-    // maximum, which loses all surrounding context.
-    //
-    // A single distant outlier — a town bus stand 3km away while every
-    // real campus building sits within 750m of the centroid — otherwise
-    // drags the default zoom out so far that the actual cluster of
-    // buildings squeezes into a small area and their labels collide
-    // with each other. That point is still fully on the map and fully
-    // findable through search; it's just excluded from deciding where
-    // the camera starts, since including it serves nobody's first look
-    // at the campus.
+    // A single distant outlier would otherwise zoom the default view out
+    // so far that the real cluster of buildings squeezes together. It is
+    // still on the map and searchable, just ignored when framing.
     const framePlaces = places.length > 3 ? excludeOutliers(places) : places;
 
-    if (framePlaces.length > 1) {
-      m.fitBounds(framePlaces.map(p => [p.lat, p.lng]), { padding: [50, 50], maxZoom: 17 });
-    } else if (framePlaces.length === 1) {
-      m.setView([framePlaces[0].lat, framePlaces[0].lng], 18);
-    }
+    const frame = () => {
+      if (framePlaces.length > 1) {
+        m.fitBounds(framePlaces.map(p => [p.lat, p.lng]), { padding: [60, 60], maxZoom: 17 });
+      } else if (framePlaces.length === 1) {
+        m.setView([framePlaces[0].lat, framePlaces[0].lng], 18);
+      }
+    };
+    frameRef.current = frame;
+    frame();
+
+    setTimeout(() => m._declutter?.(), 0);
   }, [places, onSelect]);
 
-  // Pan to whatever is selected.
+  // Highlight and pan to whatever is selected.
   useEffect(() => {
-    if (!map.current) return;
+    const m = map.current;
+    if (!m) return;
+    m._selectedId = selected?.id ?? null;
+
     markers.current.forEach((mk, id) => {
-      const p = places.find(x => x.id === id);
+      const p = placeById.current.get(id);
       if (!p) return;
-      mk.setIcon(placeIcon(colorFor(p.category), glyphFor(p.category), id === selected?.id));
+      mk.setIcon(placeIcon(p, id === selected?.id));
+      mk.getElement()?.setAttribute('aria-label', p.name);
+      mk.setZIndexOffset(id === selected?.id ? 1000 : 0);
     });
-    if (!selected) return;
-    map.current.setView([selected.lat, selected.lng], 19, { animate: true });
+
+    if (selected) m.setView([selected.lat, selected.lng], 19, { animate: true });
+    setTimeout(() => m._declutter?.(), 0);
   }, [selected, places]);
 
-  // Draw the walking route. Two overlaid polylines: a dark casing under a
-  // bright core, so the line stays readable over satellite imagery.
+  // Draw the walking route: dark casing, bright core, a slow moving dash
+  // to show direction, plus start and destination markers.
   useEffect(() => {
     const m = map.current;
     if (!m) return;
@@ -213,12 +297,21 @@ export default function MapView({ center, places, selected, onSelect, position, 
     if (line.current) { m.removeLayer(line.current); line.current = null; }
     if (!routeLine || routeLine.length < 2) return;
 
+    const first = routeLine[0];
+    const last = routeLine[routeLine.length - 1];
+
     line.current = L.layerGroup([
-      L.polyline(routeLine, { color: '#06170f', weight: 9, opacity: .55 }),
-      L.polyline(routeLine, { color: '#4ee39a', weight: 4, opacity: .95 })
+      L.polyline(routeLine, { color: '#06170f', weight: 10, opacity: .6, lineCap: 'round', lineJoin: 'round' }),
+      L.polyline(routeLine, { color: '#4ee39a', weight: 5, opacity: 1, lineCap: 'round', lineJoin: 'round' }),
+      L.polyline(routeLine, {
+        color: '#ffffff', weight: 2, opacity: .85, dashArray: '1 14',
+        lineCap: 'round', className: 'route-flow'
+      }),
+      L.marker(first, { icon: startIcon, interactive: false, zIndexOffset: 800 }),
+      L.marker(last, { icon: endIcon, interactive: false, zIndexOffset: 850 })
     ]).addTo(m);
 
-    m.fitBounds(routeLine, { padding: [70, 70], maxZoom: 18 });
+    m.fitBounds(routeLine, { padding: [80, 80], maxZoom: 18 });
   }, [routeLine]);
 
   // Track the user.
@@ -244,20 +337,83 @@ export default function MapView({ center, places, selected, onSelect, position, 
     }
   }, [position, accuracy]);
 
-  const present = [...new Set(places.map(p => p.category))];
+  const recenter = useCallback(() => frameRef.current(), []);
+
+  const present = useMemo(() => [...new Set(places.map(p => p.category))], [places]);
+  const hasUnverified = places.some(p => p.confidence && p.confidence !== 'confirmed');
+  const navigating = Boolean(routeLine && routeLine.length > 1);
 
   return (
     <div className="mapwrap">
       <div ref={holder} className="map" />
+
+      <div className={`mapctl${navigating ? ' mapctl-nav' : ''}`}>
+        <button
+          type="button"
+          className="mapctl-btn"
+          aria-pressed={basemap === 'satellite'}
+          aria-label={basemap === 'map' ? 'Switch to satellite view' : 'Switch to street map'}
+          title={basemap === 'map' ? 'Satellite' : 'Map'}
+          onClick={() => setBasemap(b => (b === 'map' ? 'satellite' : 'map'))}
+        >
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor"
+               strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <path d="m12 3 9 5-9 5-9-5z" /><path d="m3 13 9 5 9-5" />
+          </svg>
+        </button>
+        <button
+          type="button"
+          className="mapctl-btn"
+          aria-pressed={showPaths}
+          aria-label={showPaths ? 'Hide walking paths' : 'Show walking paths'}
+          title="Walking paths"
+          onClick={() => setShowPaths(v => !v)}
+        >
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor"
+               strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <circle cx="6" cy="19" r="2" /><circle cx="18" cy="5" r="2" />
+            <path d="M8 19h5a3 3 0 0 0 0-6h-2a3 3 0 0 1 0-6h5" strokeDasharray="1 4" />
+          </svg>
+        </button>
+        <button
+          type="button"
+          className="mapctl-btn"
+          aria-label="Recenter on campus"
+          title="Recenter"
+          onClick={recenter}
+        >
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor"
+               strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <circle cx="12" cy="12" r="3" /><path d="M12 2v3M12 19v3M2 12h3M19 12h3" />
+          </svg>
+        </button>
+      </div>
+
       {present.length > 0 && (
         <details className="legend">
           <summary>Legend</summary>
           {present.map(c => (
             <div key={c} className="legenditem">
-              <span className="legendswatch" style={{ background: colorFor(c) }} />
+              <span className="legendbadge" style={{ background: colorFor(c) }}>
+                <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="#fff"
+                     strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"
+                     aria-hidden="true" dangerouslySetInnerHTML={{ __html: iconFor(c) }} />
+              </span>
               {categoryLabel(c, lang)}
             </div>
           ))}
+          {hasUnverified && (
+            <div className="legenditem legendnote">
+              <span className="legendbadge legendbadge-unv">?</span>
+              {t('unverified', lang)}
+            </div>
+          )}
+          {showPaths && (
+            <div className="legenditem legendnote">
+              <span className="legendline" />
+              Walking path
+            </div>
+          )}
         </details>
       )}
     </div>

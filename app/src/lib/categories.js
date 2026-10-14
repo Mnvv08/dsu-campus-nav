@@ -19,6 +19,33 @@ export const CATEGORIES = {
   landmark:  { color: '#ff6fae', glyph: '★' }
 };
 
+
+// Consistent line icons (24x24, stroke-based) so every category looks the
+// same on every phone. Emoji glyphs render differently per OS and are
+// often illegible at pin size.
+export const ICONS = {
+  gate:      '<path d="M4 21V9a8 8 0 0 1 16 0v12"/><path d="M4 21h16"/><path d="M9 21v-6a3 3 0 0 1 6 0v6"/>',
+  admin:     '<path d="M3 21h18"/><path d="M5 21V10"/><path d="M19 21V10"/><path d="M9 21V10"/><path d="M15 21V10"/><path d="M2 10l10-6 10 6z"/>',
+  academic:  '<path d="M22 9 12 4 2 9l10 5 10-5z"/><path d="M6 11.5V16c0 1.5 2.7 3 6 3s6-1.5 6-3v-4.5"/>',
+  library:   '<path d="M4 5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2z"/><path d="M4 19V5"/><path d="M9 7h6"/>',
+  hostel:    '<path d="M3 18V7"/><path d="M3 14h18v4"/><path d="M21 14v-2a3 3 0 0 0-3-3h-7v5"/><circle cx="7" cy="11" r="1.6"/>',
+  food:      '<path d="M7 3v8"/><path d="M4 3v5a3 3 0 0 0 6 0V3"/><path d="M7 11v10"/><path d="M17 21V3c-2.5 1.5-3.5 4-3.5 7.5H17"/>',
+  medical:   '<path d="M12 5v14"/><path d="M5 12h14"/>',
+  sports:    '<circle cx="12" cy="12" r="9"/><path d="M12 3v18"/><path d="M3 12h18"/>',
+  transport: '<rect x="4" y="3" width="16" height="14" rx="3"/><path d="M4 11h16"/><circle cx="8" cy="20" r="1"/><circle cx="16" cy="20" r="1"/><path d="M8 17v2"/><path d="M16 17v2"/>',
+  parking:   '<path d="M9 18V6h4.5a3.5 3.5 0 0 1 0 7H9"/>',
+  utility:   '<path d="M13 2 4 14h7l-1 8 9-12h-7z"/>',
+  landmark:  '<path d="m12 3 2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1L3.2 9.5l6.1-.9z"/>'
+};
+
+export const iconFor = c => ICONS[c] ?? '<circle cx="12" cy="12" r="4"/>';
+
+// Higher number wins when two labels would overlap on screen.
+export const LABEL_PRIORITY = {
+  gate: 9, admin: 8, academic: 7, library: 7, medical: 7, food: 6,
+  hostel: 5, transport: 5, sports: 4, landmark: 4, parking: 2, utility: 1
+};
+
 export const glyphFor = c => CATEGORIES[c]?.glyph ?? '📍';
 
 export const colorFor = c => CATEGORIES[c]?.color ?? '#d0d0d0';

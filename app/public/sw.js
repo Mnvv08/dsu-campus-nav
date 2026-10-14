@@ -46,7 +46,26 @@ self.addEventListener('fetch', event => {
   if (request.method !== 'GET') return;
 
   const url = new URL(request.url);
-  const isTile = url.hostname.endsWith('arcgisonline.com');
+  const isVectorHost = url.hostname === 'tiles.openfreemap.org';
+  const isTile = url.hostname.endsWith('arcgisonline.com') || isVectorHost;
+
+  // The vector style document can change when the provider updates it, so
+  // it is fetched network-first (cache only as the offline fallback).
+  // Tiles, glyphs and sprites never change and stay cache-first below.
+  if (isVectorHost && url.pathname.startsWith('/styles/')) {
+    event.respondWith(
+      caches.open(TILES).then(async cache => {
+        try {
+          const res = await fetch(request);
+          if (res.ok) cache.put(request, res.clone());
+          return res;
+        } catch {
+          return (await cache.match(request)) ?? Response.error();
+        }
+      })
+    );
+    return;
+  }
 
   if (isTile) {
     event.respondWith(
