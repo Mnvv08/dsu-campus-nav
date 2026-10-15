@@ -100,7 +100,7 @@ export default function MapView({ center, places, selected, onSelect, position, 
   const network = useRef(null);
   const frameRef = useRef(() => {});
 
-  const [basemap, setBasemap] = useState('map');
+  const [basemap, setBasemap] = useState('satellite');
   const [showPaths, setShowPaths] = useState(true);
 
   // Set the map up once.
