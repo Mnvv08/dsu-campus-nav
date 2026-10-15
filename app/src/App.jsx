@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback, useEffect } from 'react';
+import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import MapView from './components/MapView';
 import Chat from './components/Chat';
 import Navigate from './components/Navigate';
@@ -13,6 +13,7 @@ import tasks from './data/tasks.json';
 import pathData from './data/paths.json';
 import { searchPlaces } from './lib/search';
 import { buildGraph, route } from './lib/route';
+import { fetchFootRoute } from './lib/osmRoute';
 import { CATEGORIES, colorFor, distance, walkTime, formatDistance } from './lib/categories';
 import { LANGUAGES, t, categoryLabel, placeName, placeNotes, taskText, detectLanguage, floorLabel } from './lib/i18n';
 
@@ -241,17 +242,63 @@ export default function App({ startChat = false, onHome }) {
 
   const offCampus = position ? distance(position, campus.center) > 3000 : false;
 
+  // 1) The hand-traced network, when it genuinely covers both ends.
+  const localWalk = useMemo(() => {
+    if (!routing || !origin || !selected) return null;
+    return route(graph, origin, selected, { avoidSteps });
+  }, [routing, origin, selected, graph, avoidSteps]);
+  const localGood = Boolean(localWalk && localWalk.offNetwork <= 60);
+
+  // 2) Otherwise, real OpenStreetMap footpaths. One request per destination,
+  // and a new one only if the walker has moved more than 30 m since the
+  // last. GPS updates every second or so; without this guard each fix
+  // would fire another request and hammer a shared public service.
+  const [osmWalk, setOsmWalk] = useState(null);
+  const [osmLoading, setOsmLoading] = useState(false);
+  const osmReq = useRef({ toId: null, from: null });
+
+  useEffect(() => {
+    if (!routing || !origin || !selected || localGood) return;
+    const last = osmReq.current;
+    if (last.toId === selected.id && last.from && distance(last.from, origin) < 30) return;
+
+    const mine = { toId: selected.id, from: { lat: origin.lat, lng: origin.lng } };
+    osmReq.current = mine;
+    setOsmLoading(true);
+    fetchFootRoute(origin, selected).then(r => {
+      if (osmReq.current !== mine) return; // superseded by a newer request
+      setOsmLoading(false);
+      setOsmWalk(r ? { ...mine, ...r } : { ...mine, failed: true });
+    });
+  }, [routing, origin, selected, localGood]);
+
   const walk = useMemo(() => {
     if (!routing || !origin || !selected) return null;
-    const r = route(graph, origin, selected, { avoidSteps });
-    if (r) return r;
-    // No usable network here — fall back to a straight line, but say so.
+    if (localGood) return localWalk;
+
+    if (osmWalk && osmWalk.toId === selected.id && !osmWalk.failed) {
+      const c = osmWalk.coords;
+      const head = distance(origin, { lat: c[0][0], lng: c[0][1] });
+      const tail = distance(selected, { lat: c[c.length - 1][0], lng: c[c.length - 1][1] });
+      return {
+        coords: [[origin.lat, origin.lng], ...c, [selected.lat, selected.lng]],
+        metres: osmWalk.metres + head + tail,
+        offNetwork: Math.round(head + tail),
+        source: 'osm'
+      };
+    }
+
+    // 3) A partial traced route beats nothing while the request is running
+    // or if it fails.
+    if (localWalk) return localWalk;
+
+    // 4) Last resort: a straight line, labelled as such.
     return {
       coords: [[origin.lat, origin.lng], [selected.lat, selected.lng]],
       metres: distance(origin, selected),
       direct: true
     };
-  }, [routing, origin, selected, graph, avoidSteps]);
+  }, [routing, origin, selected, localWalk, localGood, osmWalk]);
 
   // Directions are about one destination; changing it should reset them.
   useEffect(() => { setRouting(false); setNavOn(false); }, [selected]);
@@ -575,8 +622,10 @@ export default function App({ startChat = false, onHome }) {
             <p className="routeinfo">
               {formatDistance(walk.metres)} · {walkTime(walk.metres, lang)}
               {walk.direct && ` · ${t('straightLine', lang)}`}
-              {!walk.direct && walk.offNetwork > 60 &&
+              {walk.source === 'osm' && ' · via OpenStreetMap footpaths'}
+              {!walk.direct && walk.source !== 'osm' && walk.offNetwork > 60 &&
                 ` · roughly ${walk.offNetwork} m of this is off the traced paths`}
+              {osmLoading && !localGood && ' · finding footpath route…'}
             </p>
           )}
 
