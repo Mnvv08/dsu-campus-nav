@@ -696,22 +696,26 @@ button:focus-visible, .row:focus-visible { outline: 2px solid var(--live); outli
 
 /* Place pins: a round badge with a white ring and a line icon. */
 .pin2 {
-  position: relative;
+  position: absolute; left: 50%; top: 50%;
   display: flex; align-items: center; justify-content: center;
   width: 34px; height: 34px;
   border-radius: 50%;
   background: var(--pin);
   border: 2.5px solid #fff;
   box-shadow: 0 2px 6px rgba(0,0,0,.55), 0 0 0 1px rgba(0,0,0,.25);
+  /* --ps is set from the map's zoom level (see MapView). */
+  transform: translate(-50%, -50%) scale(var(--ps, 1));
   transition: transform .15s ease, box-shadow .15s ease;
 }
 .pin2 svg { filter: drop-shadow(0 1px 1px rgba(0,0,0,.35)); }
-.leaflet-marker-icon:hover .pin2 { transform: scale(1.1); }
-.pin2-active {
-  transform: scale(1.22);
+.leaflet-marker-icon:hover .pin2 {
+  transform: translate(-50%, -50%) scale(calc(var(--ps, 1) * 1.12));
+}
+/* The selected place is always drawn at full size, plus a halo. */
+.pin2-active, .leaflet-marker-icon:hover .pin2-active {
+  transform: translate(-50%, -50%) scale(1.2);
   box-shadow: 0 3px 10px rgba(0,0,0,.6), 0 0 0 5px color-mix(in srgb, var(--pin) 45%, transparent);
 }
-.leaflet-marker-icon:hover .pin2-active { transform: scale(1.22); }
 
 /* Unconfirmed places: dashed ring, softer fill, and a "?" badge. */
 .pin2-unverified {
@@ -740,6 +744,7 @@ button:focus-visible, .row:focus-visible { outline: 2px solid var(--live); outli
   box-shadow: 0 1px 4px rgba(0,0,0,.45);
   text-shadow: 0 1px 1px rgba(0,0,0,.6);
   white-space: nowrap;
+  max-width: 170px; overflow: hidden; text-overflow: ellipsis;
   pointer-events: none;
 }
 .placelabel::before { display: none; }

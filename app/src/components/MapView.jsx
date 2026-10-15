@@ -85,6 +85,18 @@ const endIcon = L.divIcon({
   iconAnchor: [13, 13]
 });
 
+// Pins shrink as the map zooms out, so neighbouring buildings (the
+// hostels sit within a few metres of each other) stay separate dots
+// instead of piling into one blob. Full size from zoom 18 up.
+const pinScale = z => (z <= 14 ? 0.6 : z === 15 ? 0.68 : z === 16 ? 0.78 : z === 17 ? 0.9 : 1);
+
+const overlaps = (a, b, pad = 0) =>
+  !(a.right + pad < b.left || a.left - pad > b.right ||
+    a.bottom + pad < b.top || a.top - pad > b.bottom);
+
+// Where a label may sit relative to its pin, tried in this order.
+const LABEL_DIRS = ['bottom', 'right', 'left', 'top'];
+
 // Normalises both accepted path formats (bare array, or { points, steps }).
 const normalisePath = raw => (Array.isArray(raw) ? { points: raw, steps: false } : raw);
 
@@ -114,20 +126,35 @@ export default function MapView({ center, places, selected, onSelect, position, 
     L.control.zoom({ position: 'bottomright' }).addTo(m);
     L.control.scale({ position: 'bottomleft', imperial: false, maxWidth: 110 }).addTo(m);
 
-    // Permanent labels help a first-time visitor, but labels that collide
-    // are unreadable. Greedy, priority-ordered placement: the most
-    // important label (selected, then gates/admin/academic) is kept, and a
-    // lower-priority label is hidden only if it would overlap one already
-    // shown. Hiding BOTH overlapping labels, as before, could blank out
-    // two important places at once.
+    // Label placement. For each place, most important first (selected,
+    // then gates/admin/academic), try the label below, right, left, then
+    // above its pin, and keep the first spot that overlaps neither an
+    // already-placed label nor another place's pin. If no spot is free the
+    // label is hidden (the pin stays; zooming in reveals it). The selected
+    // place's label is always shown.
     const declutterLabels = () => {
+      const scale = pinScale(m.getZoom());
+      m.getContainer().style.setProperty('--ps', String(scale));
+
+      const box = m.getContainer().getBoundingClientRect();
+      const r = 17 * scale + 2; // pin radius incl. ring
+
       const items = [];
+      const pinRects = new Map();
       markers.current.forEach((mk, id) => {
-        const el = mk.getTooltip()?.getElement();
-        if (el) items.push({ el, id });
+        // Pin boxes come from map coordinates, not the DOM: a pin that is
+        // mid-resize animation would otherwise be measured at the wrong size.
+        const pt = m.latLngToContainerPoint(mk.getLatLng());
+        const x = box.left + pt.x;
+        const y = box.top + pt.y;
+        pinRects.set(id, { left: x - r, right: x + r, top: y - r, bottom: y + r });
+
+        const tt = mk.getTooltip();
+        const el = tt?.getElement();
+        if (el) items.push({ tt, el, id });
       });
 
-      // Clear earlier hides first so every rect is measured from real layout.
+      // Clear earlier hides first so every label is measured from real layout.
       items.forEach(({ el }) => el.classList.remove('label-collision'));
 
       const prio = id => {
@@ -136,22 +163,41 @@ export default function MapView({ center, places, selected, onSelect, position, 
         if (m._selectedId === id) return 100;
         return (LABEL_PRIORITY[p.category] ?? 3) + (p.confidence === 'confirmed' ? 0.5 : 0);
       };
-
       items.sort((a, b) => prio(b.id) - prio(a.id));
 
+      const offsets = {
+        bottom: [0, r + 3],
+        right: [r + 5, 0],
+        left: [-(r + 5), 0],
+        top: [0, -(r + 3)]
+      };
+
+      const place = (tt, dir) => {
+        tt.options.direction = dir;
+        tt.options.offset = offsets[dir];
+        tt.update();
+      };
+
       const placed = [];
-      items.forEach(({ el }) => {
-        const r = el.getBoundingClientRect();
-        const pad = 3;
-        const clash = placed.some(o =>
-          !(r.right + pad < o.left || r.left - pad > o.right ||
-            r.bottom + pad < o.top || r.top - pad > o.bottom)
-        );
-        if (clash) el.classList.add('label-collision');
-        else placed.push(r);
+      items.forEach(({ tt, el, id }) => {
+        for (const dir of LABEL_DIRS) {
+          place(tt, dir);
+          const lr = el.getBoundingClientRect();
+          const hitsLabel = placed.some(o => overlaps(lr, o, 3));
+          const hitsPin = [...pinRects].some(([pid, pr]) => pid !== id && overlaps(lr, pr));
+          if (!hitsLabel && !hitsPin) {
+            placed.push(lr);
+            return;
+          }
+        }
+        // No free spot.
+        place(tt, 'bottom');
+        if (m._selectedId === id) placed.push(el.getBoundingClientRect());
+        else el.classList.add('label-collision');
       });
     };
 
+    m.on('resize', declutterLabels);
     m.on('zoomend moveend', declutterLabels);
     m._declutter = declutterLabels;
 
@@ -234,7 +280,11 @@ export default function MapView({ center, places, selected, onSelect, position, 
     placeById.current = new Map(places.map(p => [p.id, p]));
 
     places.forEach(p => {
-      const mk = L.marker([p.lat, p.lng], { icon: placeIcon(p), riseOnHover: true })
+      const mk = L.marker([p.lat, p.lng], {
+        icon: placeIcon(p),
+        riseOnHover: true,
+        zIndexOffset: (LABEL_PRIORITY[p.category] ?? 3) * 10
+      })
         .addTo(m)
         // Always-visible name, below the pin so it never covers the icon.
         .bindTooltip(p.name, {
@@ -281,7 +331,7 @@ export default function MapView({ center, places, selected, onSelect, position, 
       if (!p) return;
       mk.setIcon(placeIcon(p, id === selected?.id));
       mk.getElement()?.setAttribute('aria-label', p.name);
-      mk.setZIndexOffset(id === selected?.id ? 1000 : 0);
+      mk.setZIndexOffset(id === selected?.id ? 1000 : (LABEL_PRIORITY[p.category] ?? 3) * 10);
     });
 
     if (selected) m.setView([selected.lat, selected.lng], 19, { animate: true });
