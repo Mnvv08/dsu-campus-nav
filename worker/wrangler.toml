@@ -4,3 +4,15 @@ compatibility_date = "2025-01-01"
 
 # The API key is set with `wrangler secret put ANTHROPIC_API_KEY`.
 # Never put it in this file — wrangler.toml is committed to the repo.
+
+# Built-in rate limiter: at most 12 chat requests per IP per minute, per
+# Cloudflare location. Cloudflare creates it on deploy; nothing to set up.
+# It is a brake, not a hard cap, so also set a monthly spend limit in the
+# Anthropic console.
+[[ratelimits]]
+name = "CHAT_LIMITER"
+namespace_id = "1001"
+
+  [ratelimits.simple]
+  limit = 12
+  period = 60

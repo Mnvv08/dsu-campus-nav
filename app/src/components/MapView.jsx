@@ -4,6 +4,7 @@ import 'leaflet/dist/leaflet.css';
 import { colorFor, iconFor, categoryLabel, distance, LABEL_PRIORITY } from '../lib/categories';
 import { t } from '../lib/i18n';
 import pathData from '../data/paths.json';
+import buildingData from '../data/buildings.json';
 import { createVectorLayer } from '../lib/vectorBasemap';
 
 const ESRI = 'https://server.arcgisonline.com/ArcGIS/rest/services';
@@ -337,6 +338,49 @@ export default function MapView({ center, places, selected, onSelect, position, 
     if (selected) m.setView([selected.lat, selected.lng], 19, { animate: true });
     setTimeout(() => m._declutter?.(), 0);
   }, [selected, places]);
+
+  // Building outlines, traced with tools/buildmaker.html. Each is tinted
+  // with its place's category colour and opens that place when tapped, so
+  // the map shows real building shapes on top of the photo instead of
+  // only a pin. Hidden when zoomed far out, where outlines are just noise.
+  useEffect(() => {
+    const m = map.current;
+    if (!m) return;
+
+    const polys = [];
+    (buildingData.buildings ?? []).forEach(b => {
+      if (!b.points || b.points.length < 3) return;
+      const place = b.placeId ? placeById.current.get(b.placeId) : null;
+      const color = place ? colorFor(place.category) : '#9aa7a2';
+      const active = Boolean(place && selected?.id === place.id);
+
+      const poly = L.polygon(b.points, {
+        color: active ? '#ffffff' : color,
+        weight: active ? 3 : 2,
+        opacity: 0.95,
+        fillColor: color,
+        fillOpacity: active ? 0.45 : 0.22,
+        lineJoin: 'round',
+        bubblingMouseEvents: false
+      });
+      if (place) poly.on('click', () => onSelect(place));
+      else if (b.name) poly.bindTooltip(b.name, { sticky: true });
+      polys.push(poly);
+    });
+
+    const group = L.layerGroup(polys);
+    const sync = () => {
+      if (m.getZoom() >= 16) { if (!m.hasLayer(group)) group.addTo(m); }
+      else m.removeLayer(group);
+    };
+    sync();
+    m.on('zoomend', sync);
+
+    return () => {
+      m.off('zoomend', sync);
+      m.removeLayer(group);
+    };
+  }, [places, selected, onSelect]);
 
   // Draw the walking route: dark casing, bright core, a slow moving dash
   // to show direction, plus start and destination markers.

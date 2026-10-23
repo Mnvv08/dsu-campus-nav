@@ -45,6 +45,7 @@ As it stands: **8 places mapped, 6 of them confirmed against real Google-verifie
 |---|---|
 | `tools/picker.html` | Click rooftops on satellite imagery to record places — names, translations, aliases, category, and the departments inside each building. |
 | `tools/pathmaker.html` | Trace the walkway network by hand. Nearby points snap together into junctions. Stretches with stairs are tagged so routing can avoid them. |
+| `tools/buildmaker.html` | Trace building outlines by clicking roof corners. Link each to a place; export `buildings.json` into `app/src/data/` and the map draws the shapes. Neighbouring corners snap so shared walls line up. |
 | `tools/signage.html` | Generate printable A5 QR posters, one per place, that open the map oriented to that exact spot. |
 
 Each tool exports JSON directly into `app/src/data/`.
@@ -62,7 +63,7 @@ dsu-campus-nav/
 │   │   └── data/         places.json, paths.json, tasks.json — the actual dataset
 │   └── public/           manifest, icons, service worker, social preview image
 ├── worker/                Cloudflare Worker — holds the Anthropic API key server-side
-├── tools/                  picker.html, pathmaker.html, signage.html
+├── tools/                  picker.html, pathmaker.html, buildmaker.html, signage.html
 └── .github/workflows/      Automated build + deploy on every push to main
 ```
 

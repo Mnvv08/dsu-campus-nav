@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DSU Building Tracer</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<style>
+  :root{
+    --ink:#101413; --panel:#161c1a; --line:#2b3532; --field:#0d1211;
+    --text:#e6ece9; --muted:#8d9c97; --live:#4ee39a; --warn:#e8b04b;
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%;margin:0}
+  body{display:flex;background:var(--ink);color:var(--text);
+    font:15px/1.5 "Inter",system-ui,-apple-system,sans-serif}
+  #map{flex:1;height:100vh;background:#0d1211;cursor:crosshair}
+  aside{width:360px;height:100vh;display:flex;flex-direction:column;
+    background:var(--panel);border-left:1px solid var(--line)}
+  header{padding:20px 22px 16px;border-bottom:1px solid var(--line)}
+  h1{margin:0;font-size:19px;font-weight:600;letter-spacing:-.01em}
+  header p{margin:6px 0 0;color:var(--muted);font-size:13px}
+  .stats{display:flex;border-bottom:1px solid var(--line)}
+  .stat{flex:1;padding:12px 22px}
+  .stat b{display:block;font-size:22px;font-weight:600;color:var(--live)}
+  .stat span{color:var(--muted);font-size:12px}
+  .guide{padding:16px 22px;border-bottom:1px solid var(--line);
+    color:var(--muted);font-size:13px;line-height:1.6}
+  .guide b{color:var(--text);font-weight:500}
+  .live{padding:14px 22px;border-bottom:1px solid var(--line)}
+  .live p{margin:0 0 10px;font-size:13px;color:var(--warn)}
+  .field{display:block;margin:0 0 10px;color:var(--muted);font-size:12px}
+  .field select,.field input{display:block;width:100%;margin-top:4px;font:inherit;font-size:14px;
+    padding:8px 10px;border-radius:6px;border:1px solid var(--line);
+    background:var(--field);color:var(--text)}
+  .btns{display:flex;gap:8px}
+  button{font:inherit;font-size:14px;padding:9px 13px;border-radius:6px;
+    border:1px solid var(--line);background:var(--field);color:var(--text);cursor:pointer}
+  button:hover:not(:disabled){border-color:var(--live)}
+  button:disabled{opacity:.35;cursor:not-allowed}
+  button.primary{background:var(--live);color:#06170f;border-color:var(--live);font-weight:600}
+  .list{flex:1;overflow-y:auto;padding:8px 12px}
+  .empty{color:var(--muted);font-size:13px;padding:26px 12px;text-align:center;line-height:1.6}
+  .item{padding:9px 11px;border-radius:6px;display:flex;
+    justify-content:space-between;align-items:center;cursor:pointer;gap:8px}
+  .item:hover{background:var(--field)}
+  .item span{font-size:13px;min-width:0}
+  .item em{color:var(--muted);font-style:normal;font-size:12px;display:block}
+  .item button{padding:3px 8px;font-size:12px;color:var(--muted);
+    border-color:transparent;background:none;flex:none}
+  .item button:hover{color:#ff8080;border-color:#ff8080}
+  footer{padding:14px 22px;border-top:1px solid var(--line);display:flex;gap:9px}
+  footer button{flex:1}
+  #file,#placefile{display:none}
+</style>
+</head>
+<body>
+<div id="map"></div>
+<aside>
+  <header>
+    <h1>DSU Building Tracer</h1>
+    <p>Outline each building so the map can draw it.</p>
+  </header>
+
+  <div class="stats">
+    <div class="stat"><b id="nBuildings">0</b><span>buildings</span></div>
+    <div class="stat"><b id="nLinked">0</b><span>linked to a place</span></div>
+  </div>
+
+  <div class="guide">
+    Click each <b>corner</b> of a building's roof, going around it. Press
+    <b>Enter</b> to close the outline, or <b>Escape</b> to discard it. A click
+    within a couple of metres of another building's corner snaps to it, so
+    neighbouring buildings share a clean wall. First press <b>Load places</b>
+    and pick the building's place from the list, so tapping the outline in the
+    app opens that place.
+  </div>
+
+  <div class="live">
+    <p id="status">No outline in progress.</p>
+    <label class="field">Place this building belongs to
+      <select id="place"><option value="">Load places first, or leave unlinked</option></select>
+    </label>
+    <label class="field">Or a plain name (only if it has no place)
+      <input type="text" id="name" placeholder="e.g. Substation">
+    </label>
+    <div class="btns">
+      <button id="finish" disabled>Close outline</button>
+      <button id="undo" disabled>Undo corner</button>
+    </div>
+  </div>
+
+  <div class="list" id="list"></div>
+
+  <footer>
+    <button id="loadPlaces">Load places</button>
+    <button id="import">Load buildings</button>
+    <button id="export" class="primary">Export</button>
+    <input type="file" id="file" accept=".json">
+    <input type="file" id="placefile" accept=".json">
+  </footer>
+</aside>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script>
+const CAMPUS = [12.6606692, 77.4508399];
+const SNAP_M = 2.5; // within this many metres a click reuses an existing corner
+
+const map = L.map('map').setView(CAMPUS, 18);
+L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+  { maxZoom: 21, maxNativeZoom: 19, attribution: 'Imagery: Esri, Maxar' }).addTo(map);
+
+let buildings = [];    // [{ id, placeId?, name?, points: [[lat,lng],...] }]
+let places = [];       // loaded from places.json, for the dropdown
+let draft = [];
+let draftShape = null;
+let draftDots = [];
+const drawn = [];      // Leaflet polygons, index-matched with `buildings`
+
+const $ = id => document.getElementById(id);
+
+function metres(a, b){
+  const R = 6371000, r = d => d * Math.PI / 180;
+  const dLat = r(b[0] - a[0]), dLng = r(b[1] - a[1]);
+  const s = Math.sin(dLat/2)**2 +
+    Math.cos(r(a[0])) * Math.cos(r(b[0])) * Math.sin(dLng/2)**2;
+  return 2 * R * Math.asin(Math.sqrt(s));
+}
+
+// Area in square metres, using a local flat projection (fine at campus scale).
+function areaOf(pts){
+  const lat0 = pts.reduce((s, p) => s + p[0], 0) / pts.length;
+  const kx = 111320 * Math.cos(lat0 * Math.PI / 180), ky = 110540;
+  let a = 0;
+  pts.forEach((p, i) => {
+    const q = pts[(i + 1) % pts.length];
+    a += (p[1] * kx) * (q[0] * ky) - (q[1] * kx) * (p[0] * ky);
+  });
+  return Math.abs(a / 2);
+}
+
+function snap(ll){
+  let best = null, bestD = SNAP_M;
+  for (const b of buildings) for (const v of b.points) {
+    const d = metres(ll, v);
+    if (d < bestD) { bestD = d; best = v; }
+  }
+  for (const v of draft) {
+    const d = metres(ll, v);
+    if (d < bestD) { bestD = d; best = v; }
+  }
+  return best ? [...best] : ll;
+}
+
+map.on('click', e => {
+  draft.push(snap([e.latlng.lat, e.latlng.lng]));
+  redrawDraft();
+});
+
+function redrawDraft(){
+  if (draftShape) { map.removeLayer(draftShape); draftShape = null; }
+  draftDots.forEach(d => map.removeLayer(d));
+  draftDots = [];
+
+  if (draft.length) {
+    draftShape = (draft.length >= 3 ? L.polygon : L.polyline)(draft, {
+      color: '#e8b04b', weight: 3, fillColor: '#e8b04b', fillOpacity: .2
+    }).addTo(map);
+    draft.forEach(v => draftDots.push(
+      L.circleMarker(v, { radius: 4, color: '#e8b04b', fillColor: '#e8b04b', fillOpacity: 1, weight: 1 }).addTo(map)
+    ));
+  }
+
+  $('status').textContent = draft.length
+    ? `${draft.length} corners` + (draft.length >= 3 ? `, about ${Math.round(areaOf(draft))} m². Enter to close.` : '. Keep clicking corners.')
+    : 'No outline in progress.';
+  $('finish').disabled = draft.length < 3;
+  $('undo').disabled = draft.length === 0;
+}
+
+function styleFor(b){
+  return b.placeId
+    ? { color: '#4ee39a', weight: 2, fillColor: '#4ee39a', fillOpacity: .22 }
+    : { color: '#6db8ff', weight: 2, fillColor: '#6db8ff', fillOpacity: .18 };
+}
+
+function labelOf(b){
+  const p = places.find(x => x.id === b.placeId);
+  return p ? p.name : (b.name || (b.placeId ? b.placeId : 'Unnamed building'));
+}
+
+function uniqueId(base){
+  let id = base, n = 2;
+  while (buildings.some(b => b.id === id)) id = `${base}-${n++}`;
+  return id;
+}
+
+function finish(){
+  if (draft.length < 3) return;
+  const placeId = $('place').value;
+  const name = $('name').value.trim();
+  if (!placeId && !name && !confirm('This outline is not linked to a place and has no name. Add it anyway?')) return;
+
+  const b = { id: uniqueId(placeId ? `bld-${placeId}` : 'bld'), points: draft };
+  if (placeId) b.placeId = placeId;
+  else if (name) b.name = name;
+
+  buildings.push(b);
+  drawn.push(L.polygon(b.points, styleFor(b)).addTo(map));
+  draft = [];
+  $('name').value = '';
+  $('place').value = '';
+  redrawDraft();
+  render();
+}
+
+function discard(){ draft = []; redrawDraft(); }
+
+$('finish').addEventListener('click', finish);
+$('undo').addEventListener('click', () => { draft.pop(); redrawDraft(); });
+
+document.addEventListener('keydown', e => {
+  if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT') return;
+  if (e.key === 'Enter') { e.preventDefault(); finish(); }
+  if (e.key === 'Escape') discard();
+});
+
+function render(){
+  $('nBuildings').textContent = buildings.length;
+  $('nLinked').textContent = buildings.filter(b => b.placeId).length;
+  const list = $('list');
+
+  if (!buildings.length){
+    list.innerHTML = '<p class="empty">No buildings yet.<br>Click the corners of a roof to start.</p>';
+    return;
+  }
+
+  list.innerHTML = '';
+  buildings.forEach((b, i) => {
+    const row = document.createElement('div');
+    row.className = 'item';
+    const span = document.createElement('span');
+    const title = document.createTextNode(labelOf(b));
+    const em = document.createElement('em');
+    em.textContent = `${b.points.length} corners · ${Math.round(areaOf(b.points))} m²` +
+      (b.placeId || b.name ? '' : ' · unlinked');
+    span.append(title, em);
+    row.appendChild(span);
+    row.addEventListener('click', () => map.fitBounds(b.points, { padding: [80, 80], maxZoom: 20 }));
+
+    const del = document.createElement('button');
+    del.textContent = 'Remove';
+    del.addEventListener('click', ev => {
+      ev.stopPropagation();
+      map.removeLayer(drawn[i]);
+      drawn.splice(i, 1);
+      buildings.splice(i, 1);
+      render();
+    });
+    row.appendChild(del);
+    list.appendChild(row);
+  });
+}
+
+function fillPlaceSelect(){
+  const sel = $('place');
+  sel.innerHTML = '<option value="">No place (use a plain name)</option>';
+  [...places].sort((a, b) => a.name.localeCompare(b.name)).forEach(p => {
+    const o = document.createElement('option');
+    o.value = p.id;
+    o.textContent = p.name;
+    sel.appendChild(o);
+  });
+}
+
+$('loadPlaces').addEventListener('click', () => $('placefile').click());
+$('placefile').addEventListener('change', e => {
+  const f = e.target.files[0];
+  if (!f) return;
+  const r = new FileReader();
+  r.onload = () => {
+    try {
+      const d = JSON.parse(r.result);
+      places = d.places || [];
+      fillPlaceSelect();
+      places.forEach(p => {
+        L.circleMarker([p.lat, p.lng], {
+          radius: 6, color: '#6db8ff', fillColor: '#6db8ff', fillOpacity: .9, weight: 2
+        }).addTo(map).bindTooltip(p.name, { direction: 'top' });
+      });
+      render();
+    } catch { alert('That file could not be read as places JSON.'); }
+  };
+  r.readAsText(f);
+  e.target.value = '';
+});
+
+$('import').addEventListener('click', () => $('file').click());
+$('file').addEventListener('change', e => {
+  const f = e.target.files[0];
+  if (!f) return;
+  const r = new FileReader();
+  r.onload = () => {
+    try {
+      const d = JSON.parse(r.result);
+      drawn.forEach(l => map.removeLayer(l));
+      drawn.length = 0;
+      buildings = d.buildings || [];
+      buildings.forEach(b => drawn.push(L.polygon(b.points, styleFor(b)).addTo(map)));
+      render();
+      if (buildings.length) map.fitBounds(buildings.flatMap(b => b.points), { padding: [60, 60] });
+    } catch { alert('That file could not be read as buildings JSON.'); }
+  };
+  r.readAsText(f);
+  e.target.value = '';
+});
+
+$('export').addEventListener('click', () => {
+  if (!buildings.length) return alert('Trace at least one building first.');
+  const blob = new Blob(
+    [JSON.stringify({ updated: new Date().toISOString().slice(0, 10), buildings }, null, 2)],
+    { type: 'application/json' }
+  );
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'buildings.json';
+  a.click();
+  URL.revokeObjectURL(a.href);
+});
+
+window.addEventListener('beforeunload', e => {
+  if (buildings.length || draft.length) { e.preventDefault(); e.returnValue = ''; }
+});
+
+render();
+redrawDraft();
+</script>
+</body>
+</html>
