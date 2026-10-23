@@ -46,6 +46,7 @@ As it stands: **8 places mapped, 6 of them confirmed against real Google-verifie
 | `tools/picker.html` | Click rooftops on satellite imagery to record places — names, translations, aliases, category, and the departments inside each building. |
 | `tools/pathmaker.html` | Trace the walkway network by hand. Nearby points snap together into junctions. Stretches with stairs are tagged so routing can avoid them. |
 | `tools/buildmaker.html` | Trace building outlines by clicking roof corners. Link each to a place; export `buildings.json` into `app/src/data/` and the map draws the shapes. Neighbouring corners snap so shared walls line up. |
+| `npm run validate` (in `app/`) | Checks places, footpaths and building outlines: duplicate IDs, bad coordinates, unconnected footpath pieces, missed junctions, places far from any path, and how many place-to-place trips can be routed. Run it after every field session. |
 | `tools/signage.html` | Generate printable A5 QR posters, one per place, that open the map oriented to that exact spot. |
 
 Each tool exports JSON directly into `app/src/data/`.
