@@ -3,7 +3,10 @@
    The look is borrowed from Indian campus and road direction boards:
    signboard blue panels with white condensed lettering, signal yellow for
    the one thing to press, night navy around them. Colour tokens live in
-   index.css (:root) so the map app and this page stay one product. */
+   index.css (:root) so the map app and this page stay one product.
+
+   Motion is set up in Home.jsx (GSAP). Everything here also works with
+   no motion at all; see the reduced-motion block at the end. */
 
 .site {
   /* body is a flex row for the map/panel split, so the landing page has
@@ -13,12 +16,11 @@
   min-width: 0;
   height: 100%;
   overflow-y: auto;
-  scroll-behavior: smooth;
+  overflow-x: hidden;
   background: var(--ink);
   color: var(--text);
   font: 17px/1.6 var(--font-body);
 }
-@media (prefers-reduced-motion: reduce) { .site { scroll-behavior: auto; } }
 
 .site h1, .site h2, .site h3 {
   font-family: var(--font-sign);
@@ -27,16 +29,28 @@
 }
 .site a { color: inherit; }
 
+/* Reading progress */
+.readbar {
+  position: fixed; left: 0; right: 0; top: 0; z-index: 1300;
+  height: 4px;
+  background: var(--live);
+  transform-origin: 0 50%;
+  transform: scaleX(0);
+  box-shadow: 0 0 12px rgba(255, 199, 44, .7);
+}
+
 /* Nav */
 .sitenav {
   position: sticky; top: 0; z-index: 1100;
   display: flex; align-items: center; justify-content: space-between;
   gap: 20px;
   padding: 14px 40px;
-  background: rgba(10, 27, 51, .9);
-  backdrop-filter: blur(10px);
-  border-bottom: 1px solid var(--line);
+  background: rgba(10, 27, 51, .72);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid rgba(255,255,255,.08);
+  transition: transform .35s ease;
 }
+.navhidden .sitenav { transform: translateY(-110%); }
 .mark {
   display: flex; align-items: center; gap: 9px;
   font: 700 19px/1 var(--font-sign);
@@ -46,36 +60,109 @@
 .navlinks a { color: var(--muted); font-size: 15px; text-decoration: none; }
 .navlinks a:hover { color: var(--text); }
 
-/* Hero: the satellite map fills the frame, the signboard sits on it. */
-.hero {
+/* ---------- The story: a 3D flight over the campus ---------- */
+
+/* The section is tall; the stage sticks to the screen while the visitor
+   scrolls through it, and the scroll position drives the camera. */
+.story {
   position: relative;
-  min-height: min(88vh, 820px);
-  display: flex; align-items: center;
-  padding: 64px 40px;
+  height: 430vh;
+  margin-top: -61px; /* run under the sticky nav */
+}
+.stage {
+  position: sticky; top: 0;
+  height: 100vh; height: 100svh;
   overflow: hidden;
   isolation: isolate;
 }
-.heromap {
-  position: absolute; inset: 0; z-index: -1;
-  background: #1b2a1f;
+.gl, .gllabels, .flatmap { position: absolute; inset: 0; }
+.gl { z-index: 0; background: var(--ink); }
+.gl canvas { display: block; width: 100%; height: 100%; }
+.gllabels { z-index: 2; pointer-events: none; overflow: hidden; }
+.flatmap { z-index: 0; }
+.glcredit {
+  position: absolute; right: 12px; bottom: 8px; z-index: 5; margin: 0;
+  font-size: 11px; color: rgba(255,255,255,.7);
 }
-/* Darken the imagery towards the board so the type never fights it. */
-.hero::after {
-  content: ''; position: absolute; inset: 0; z-index: -1; pointer-events: none;
-  background: linear-gradient(90deg, rgba(10,27,51,.78) 0%, rgba(10,27,51,.35) 45%, rgba(10,27,51,0) 70%),
-              linear-gradient(0deg, var(--ink) 0%, rgba(10,27,51,0) 22%);
+
+/* Shade on the left for the board, and a fade into the page below. */
+.stageshade {
+  position: absolute; inset: 0; z-index: 3; pointer-events: none;
+  background:
+    linear-gradient(90deg, rgba(10,27,51,.7) 0%, rgba(10,27,51,.25) 40%, rgba(10,27,51,0) 65%),
+    linear-gradient(0deg, var(--ink) 0%, rgba(10,27,51,0) 18%),
+    linear-gradient(180deg, rgba(10,27,51,.6) 0%, rgba(10,27,51,0) 16%);
 }
-.heromap .leaflet-control-attribution { font-size: 10px; }
+
+/* Place labels in the 3D scene: small direction boards on a stalk. */
+.label3d {
+  position: relative;
+  padding: 4px 11px 5px;
+  background: var(--board);
+  color: #fff;
+  font: 600 15px/1.1 var(--font-sign);
+  white-space: nowrap;
+  border-radius: 5px;
+  box-shadow: inset 0 0 0 1.5px rgba(255,255,255,.9), 0 6px 16px rgba(0,0,0,.45);
+  border-left: 5px solid var(--pin);
+  will-change: transform, opacity;
+}
+.label3d::after {
+  content: ''; position: absolute; left: 50%; top: 100%;
+  width: 2px; height: 14px; margin-left: -1px;
+  background: rgba(255,255,255,.85);
+}
+.label3d-unv::before {
+  content: '?'; display: inline-flex; align-items: center; justify-content: center;
+  width: 15px; height: 15px; margin-right: 6px; border-radius: 50%;
+  background: var(--warn); color: var(--on-live); font: 700 11px/1 var(--font-body);
+  vertical-align: 1px;
+}
+
+.beats {
+  position: absolute; inset: 0; z-index: 4;
+  perspective: 1200px;
+  pointer-events: none;
+}
+.beat {
+  position: absolute;
+  left: max(40px, calc((100vw - 1180px) / 2));
+  right: 40px;
+  top: 50%;
+  transform-origin: 50% 50%;
+}
+.beat0 { transform: translateY(-46%); }
+.beat .actions, .beat button, .beat a { pointer-events: auto; }
+.beatcap { top: auto; bottom: 13vh; opacity: 0; max-width: 760px; }
+.beatright { left: auto; text-align: right; margin-left: auto; }
+.beatend { left: 0; right: 0; margin: 0 auto; text-align: center; max-width: 900px; }
+.beatend .actions { justify-content: center; }
+
+.capbig {
+  margin: 0;
+  font: 700 clamp(52px, 9vw, 132px)/.92 var(--font-sign);
+  color: #fff;
+  letter-spacing: -.01em;
+  text-shadow: 0 6px 40px rgba(4, 12, 26, .8);
+  text-wrap: balance;
+}
+.capsmall {
+  margin: 16px 0 0;
+  font-size: 21px; line-height: 1.45;
+  color: rgba(255,255,255,.88);
+  text-shadow: 0 2px 16px rgba(4, 12, 26, .9);
+  max-width: 34ch;
+}
+.beatright .capsmall { margin-left: auto; }
 
 .signboard {
   position: relative;
   width: min(580px, 100%);
-  margin-left: max(0px, calc((100vw - 1180px) / 2));
   padding: 38px 40px 34px;
   background: var(--board);
   color: #fff;
   border-radius: 10px;
-  /* The thin white inset border every painted direction board has. */
+  transform-style: preserve-3d;
   box-shadow: inset 0 0 0 3px var(--board), inset 0 0 0 5px rgba(255,255,255,.9),
               0 30px 60px rgba(4, 12, 26, .55);
 }
@@ -95,6 +182,27 @@
 .signboard .actions { margin-top: 28px; }
 .signboard .counts { color: rgba(255,255,255,.72); }
 
+.scrollhint {
+  position: absolute; left: 50%; bottom: 28px; z-index: 5;
+  transform: translateX(-50%);
+  display: flex; flex-direction: column; align-items: center; gap: 8px;
+  color: rgba(255,255,255,.8); font-size: 14px;
+}
+.mouse {
+  width: 24px; height: 38px; border: 2px solid rgba(255,255,255,.8); border-radius: 14px;
+  display: flex; justify-content: center; padding-top: 6px;
+}
+.mouse span {
+  width: 4px; height: 8px; border-radius: 2px; background: var(--live);
+  animation: wheel 1.6s ease-in-out infinite;
+}
+@keyframes wheel {
+  0% { transform: translateY(0); opacity: 1; }
+  70% { transform: translateY(12px); opacity: 0; }
+  100% { transform: translateY(0); opacity: 0; }
+}
+
+/* Buttons */
 .actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 30px; }
 .go, .alt {
   font: 600 20px/1 var(--font-sign);
@@ -102,39 +210,65 @@
   padding: 15px 28px; border-radius: 8px; cursor: pointer;
   border: 2px solid transparent;
   text-decoration: none; display: inline-block;
+  will-change: transform;
 }
-.go { background: var(--live); color: var(--on-live); }
-.go:hover { background: #ffd357; }
+.go {
+  background: var(--live); color: var(--on-live);
+  box-shadow: 0 10px 30px rgba(255, 199, 44, .35);
+}
+.go:hover { background: #ffd357; box-shadow: 0 14px 40px rgba(255, 199, 44, .55); }
 .alt { background: none; color: var(--text); border-color: var(--line); }
 .alt:hover { border-color: var(--text); }
 
 .counts { margin: 18px 0 0; color: var(--muted); font-size: 15px; }
 
-/* Pins land one after another when the page opens. */
-.heropin .pin2 { animation: pindrop .5s cubic-bezier(.2, .9, .3, 1.3) both; animation-delay: var(--delay, 0ms); }
-@keyframes pindrop {
-  from { opacity: 0; transform: translate(-50%, -140%) scale(.6); }
-  to   { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+/* ---------- Greeting marquee ---------- */
+.marquee {
+  position: relative; z-index: 2;
+  margin: 40px -5vw 0;
+  padding: 10px 0;
+  overflow: hidden;
+  transform: rotate(-3deg);
 }
-@media (prefers-reduced-motion: reduce) { .heropin .pin2 { animation: none; } }
+.marqueetrack {
+  display: flex; width: max-content;
+  padding: 12px 0;
+  background: var(--live);
+  color: var(--on-live);
+  will-change: transform;
+}
+.marqueetrack.alt {
+  background: var(--board); color: #fff;
+  margin-top: 8px;
+  box-shadow: inset 0 3px 0 rgba(255,255,255,.9), inset 0 -3px 0 rgba(255,255,255,.9);
+}
+.mq {
+  display: inline-flex; align-items: center; gap: 30px;
+  padding: 0 30px 0 0;
+  font: 700 42px/1.1 var(--font-sign);
+  white-space: nowrap;
+}
+.mqdot { width: 14px; height: 14px; border-radius: 50%; background: currentColor; opacity: .5; }
 
-/* Bands */
+/* ---------- Bands ---------- */
 .band {
   max-width: 1180px; margin: 0 auto;
-  padding: 88px 40px;
+  padding: 100px 40px;
 }
 .band + .band { border-top: 1px solid var(--line); }
 .band h2, .paperband h2 {
   margin: 0 0 30px;
-  font-size: clamp(34px, 4vw, 48px);
-  line-height: 1.05;
+  font-size: clamp(38px, 5vw, 64px);
+  line-height: 1.02;
 }
+.word { display: inline-block; overflow: hidden; vertical-align: top; perspective: 600px; padding-bottom: .06em; }
+.wordin { display: inline-block; transform-origin: 50% 100%; }
 .lede { margin: 0; color: var(--muted); font-size: 19px; max-width: 60ch; }
 .aside { margin: 30px 0 0; color: var(--muted); font-size: 16px; max-width: 62ch; }
 
 /* Destination board */
-.boardband { padding-top: 72px; }
-.boardhead { display: flex; align-items: baseline; justify-content: space-between; gap: 12px 40px; flex-wrap: wrap; margin-bottom: 26px; }
+.boardband { padding-top: 110px; }
+.boardhead { display: flex; align-items: baseline; justify-content: space-between; gap: 12px 40px; flex-wrap: wrap; margin-bottom: 30px; }
 .boardhead h2 { margin: 0; }
 .boardhead p { margin: 0; color: var(--muted); font-size: 16px; max-width: 46ch; }
 
@@ -143,9 +277,13 @@
   display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px;
   background: var(--board);
   border-radius: 12px;
-  box-shadow: inset 0 0 0 3px var(--board), inset 0 0 0 5px rgba(255,255,255,.9);
+  box-shadow: inset 0 0 0 3px var(--board), inset 0 0 0 5px rgba(255,255,255,.9),
+              0 40px 80px rgba(3, 10, 22, .6);
   padding: 14px;
+  transform-origin: 50% 0%;
+  transform-style: preserve-3d;
 }
+.boardli { perspective: 800px; }
 .boardrow {
   width: 100%;
   display: grid; grid-template-columns: 44px minmax(0, 1fr) auto; align-items: center; gap: 16px;
@@ -153,12 +291,13 @@
   background: none; border: 0; border-radius: 6px;
   color: #fff; text-align: left;
   font: inherit;
+  transition: background .2s, transform .2s;
 }
-.boardrow:hover { background: rgba(255,255,255,.1); }
+.boardrow:hover { background: rgba(255,255,255,.12); transform: translateX(4px); }
 .boardarrow {
   width: 40px; height: 40px; padding: 6px;
   fill: var(--board); background: #fff; border-radius: 50%;
-  transition: transform .3s ease;
+  transform: rotate(var(--deg));
 }
 .boardname { display: flex; flex-direction: column; min-width: 0; }
 .boardname strong {
@@ -173,53 +312,114 @@
 }
 .boarddist { display: flex; flex-direction: column; align-items: flex-end; }
 .boarddist strong { font: 700 24px/1.1 var(--font-sign); color: var(--live); }
-.boarddist span { font-size: 13px; color: rgba(255,255,255,.75); }
+.boarddist > span { font-size: 13px; color: rgba(255,255,255,.75); }
 
-/* Facts: the numbers are the content here. */
-.facts { display: grid; grid-template-columns: 1.3fr 1fr 1fr; gap: 40px; align-items: end; }
+/* Split-flap characters */
+.flap { display: inline-flex; gap: 2px; }
+.flapch {
+  display: inline-block; min-width: .58em; text-align: center;
+  padding: 0 1px;
+  background: rgba(3, 14, 34, .45);
+  border-radius: 3px;
+  box-shadow: inset 0 -1px 0 rgba(255,255,255,.08);
+  transform-origin: 50% 50%;
+}
+.flapch.flipping { animation: flip .055s linear; }
+@keyframes flip { from { transform: rotateX(80deg); } to { transform: rotateX(0); } }
+
+/* Facts */
+.facts { display: grid; grid-template-columns: 1.3fr 1fr 1fr; gap: 40px; align-items: end; perspective: 1000px; }
 .fact b {
   display: block;
-  font: 700 56px/1 var(--font-sign);
+  font: 700 64px/1 var(--font-sign);
   color: var(--live);
   margin-bottom: 12px;
+  transform-origin: 0 100%;
+  text-shadow: 0 0 40px rgba(255, 199, 44, .25);
 }
-.fact.big b { font-size: 104px; }
+.fact.big b { font-size: 128px; }
 .fact p { margin: 0; color: var(--muted); font-size: 16px; max-width: 34ch; }
 
-/* Features on a light band, for one change of pace down the page. */
-.paperband { background: var(--paper); color: var(--paper-ink); }
-.paperinner { max-width: 1180px; margin: 0 auto; padding: 88px 40px; }
-.does { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 40px 44px; margin: 0; }
-.does div { border-top: 4px solid var(--board); padding-top: 16px; }
-.does dt { font: 600 24px/1.15 var(--font-sign); margin-bottom: 8px; }
-.does dd { margin: 0; color: #3d4c63; font-size: 16px; }
+/* Features: cards on a light band */
+.paperband { background: var(--paper); color: var(--paper-ink); overflow: hidden; }
+.paperinner { max-width: 1180px; margin: 0 auto; padding: 100px 40px 120px; }
+.cards {
+  display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 24px;
+  perspective: 1400px;
+  transform-style: preserve-3d;
+}
+.card { transform-style: preserve-3d; }
+.cardin {
+  position: relative; height: 100%;
+  padding: 28px 26px 30px;
+  background: #fff;
+  border-radius: 14px;
+  border-top: 6px solid var(--board);
+  box-shadow: 0 18px 40px rgba(10, 27, 51, .12);
+  transform: perspective(900px) rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg));
+  transition: transform .25s ease-out, box-shadow .25s;
+  overflow: hidden;
+}
+.cardin:hover { box-shadow: 0 28px 60px rgba(10, 27, 51, .22); }
+.cardicon {
+  width: 46px; height: 46px; padding: 10px;
+  fill: none; stroke: #fff; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round;
+  background: var(--board); border-radius: 12px;
+  margin-bottom: 18px;
+  transform: translateZ(30px);
+}
+.cardin h3 { margin: 0 0 8px; font: 600 26px/1.1 var(--font-sign); transform: translateZ(20px); }
+.cardin p { margin: 0; color: #3d4c63; font-size: 16px; }
+.sheen {
+  position: absolute; inset: 0; pointer-events: none;
+  background: radial-gradient(circle at var(--gx, 50%) var(--gy, 0%), rgba(255, 199, 44, .22), transparent 55%);
+  opacity: 0; transition: opacity .25s;
+}
+.cardin:hover .sheen { opacity: 1; }
 
-/* Pipeline: numbered because it genuinely is a sequence. The number is a
-   real element, not a ::before, so the two-column grid stays stable. */
-.pipeline { list-style: none; margin: 40px 0 0; padding: 0; }
+/* Pipeline: numbered because it genuinely is a sequence. */
+.pipewrap { position: relative; margin-top: 40px; }
+.pipeline-rail {
+  position: absolute; left: 23px; top: 26px; bottom: 26px; width: 3px;
+  background: var(--line); border-radius: 2px;
+}
+.pipefill {
+  position: absolute; inset: 0;
+  background: var(--live);
+  transform-origin: 50% 0;
+  box-shadow: 0 0 14px rgba(255, 199, 44, .7);
+}
+.pipeline { list-style: none; margin: 0; padding: 0; position: relative; }
 .pipeline li {
   display: grid; grid-template-columns: 64px minmax(0, 1fr); gap: 22px;
   padding: 26px 0;
-  border-top: 1px solid var(--line);
 }
 .pipeline .stepnum {
+  position: relative; z-index: 1;
   width: 48px; height: 48px;
   display: flex; align-items: center; justify-content: center;
   font: 700 26px/1 var(--font-sign);
   color: var(--on-live); background: var(--live);
   border-radius: 50%;
+  box-shadow: 0 0 0 6px var(--ink);
 }
-.pipeline h3 { margin: 4px 0 6px; font-size: 26px; font-weight: 600; }
+.pipeline h3 { margin: 4px 0 6px; font-size: 30px; font-weight: 600; }
 .pipeline p { margin: 0; color: var(--muted); font-size: 16px; max-width: 66ch; }
 
 /* Closing: coverage and corrections side by side. */
 .closegrid { display: grid; grid-template-columns: 1fr 1fr; gap: 64px; }
-.closegrid h2 { font-size: clamp(30px, 3.2vw, 40px); }
+.closegrid h2 { font-size: clamp(30px, 3.2vw, 42px); }
 .coveragebar {
   width: 100%; height: 14px; border-radius: 999px;
   background: var(--line); overflow: hidden; margin: 0 0 18px;
 }
-.coveragefill { height: 100%; background: var(--live); border-radius: 999px; }
+.coveragefill {
+  height: 100%; border-radius: 999px;
+  background: repeating-linear-gradient(-45deg, var(--live) 0 12px, #ffd357 12px 24px);
+  background-size: 34px 34px;
+  animation: stripes 1.2s linear infinite;
+}
+@keyframes stripes { to { background-position: 34px 0; } }
 
 .sitefoot {
   max-width: 1180px; margin: 0 auto;
@@ -234,7 +434,7 @@
 }
 
 @media (max-width: 1000px) {
-  .does { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .cards { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .board { grid-template-columns: 1fr; }
 }
 
@@ -243,26 +443,31 @@
   .navlinks { gap: 16px; }
   .navlinks a:nth-child(2), .navlinks a:nth-child(3) { display: none; }
   .mark { font-size: 18px; white-space: nowrap; }
-  /* The board overlaps the bottom of the map; keep the imagery credit
-     above it. */
-  .heromap .leaflet-bottom { bottom: 60px; }
 
-  /* Phone: the map shows on top, the board hangs below it. */
-  .hero {
-    display: block; min-height: 0;
-    padding: 0;
+  .story { height: 380vh; margin-top: -57px; }
+  .stageshade {
+    background:
+      linear-gradient(0deg, rgba(10,27,51,.92) 0%, rgba(10,27,51,.55) 38%, rgba(10,27,51,0) 62%),
+      linear-gradient(180deg, rgba(10,27,51,.6) 0%, rgba(10,27,51,0) 16%);
   }
-  .heromap { position: relative; inset: auto; height: 52vh; min-height: 300px; z-index: 0; }
-  .hero::after { display: none; }
-  .signboard {
-    width: auto; margin: -56px 14px 0;
-    padding: 28px 24px 26px;
-  }
-  .signboard h1 { font-size: clamp(40px, 11.5vw, 56px); }
-  .signlede { font-size: 17px; }
+  .beat { left: 14px; right: 14px; }
+  .beat0 { top: auto; bottom: 16px; transform: none; }
+  .beatcap { bottom: 90px; }
+  .beatright { text-align: left; }
+  .beatright .capsmall { margin-left: 0; }
+  .capbig { font-size: clamp(46px, 14vw, 72px); }
+  .capsmall { font-size: 18px; }
+  .signboard { width: auto; padding: 24px 22px 22px; }
+  .signboard h1 { font-size: clamp(36px, 10.5vw, 52px); }
+  .signlede { font-size: 16px; margin-top: 14px; }
+  .signboard .actions { margin-top: 18px; }
+  .scrollhint { display: none; }
+  .label3d { font-size: 13px; padding: 3px 8px 4px; }
 
-  .band, .paperinner { padding: 60px 18px; }
-  .boardband { padding-top: 56px; }
+  .mq { font-size: 30px; gap: 20px; padding-right: 20px; }
+
+  .band, .paperinner { padding: 70px 18px; }
+  .boardband { padding-top: 80px; }
   .board { padding: 8px; }
   .boardrow { grid-template-columns: 36px minmax(0, 1fr) auto; gap: 12px; padding: 12px 10px; }
   .boardarrow { width: 34px; height: 34px; padding: 5px; }
@@ -271,11 +476,22 @@
   .boardname > span { display: flex; flex-direction: column; align-items: flex-start; }
   .boarddist strong { font-size: 21px; }
 
-  .facts, .does, .closegrid { grid-template-columns: 1fr; gap: 30px; }
-  .fact.big b { font-size: 80px; }
-  .fact b { font-size: 48px; }
+  .facts, .cards, .closegrid { grid-template-columns: 1fr; gap: 30px; }
+  .fact.big b { font-size: 96px; }
+  .fact b { font-size: 56px; }
   .sitefoot { padding: 32px 18px 48px; }
 }
 
 /* Install prompt sits above the sticky nav on the landing page */
 .site .installbar { position: sticky; top: 0; z-index: 1200; }
+
+/* Reduced motion: no flight. The stage becomes an ordinary hero showing
+   the campus from one fixed angle, and nothing moves on its own. */
+@media (prefers-reduced-motion: reduce) {
+  .story { height: auto; }
+  .stage { position: relative; height: 100vh; height: 100svh; }
+  .beatcap, .scrollhint { display: none; }
+  .mouse span, .coveragefill { animation: none; }
+  .marquee { transform: none; }
+  .cardin, .boardrow, .sitenav { transition: none; }
+}

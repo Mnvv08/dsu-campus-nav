@@ -71,6 +71,7 @@ The token lasts only for that Terminal window.
 6. Data validator (`npm run validate` in `app/`).
 7. Worker hardened and deployed (see above).
 8. Visual redesign (28 October 2026): a direction-board look shared by the landing page and the map app. Tokens in `app/src/index.css` (`:root`): signboard blue `--board`, signal yellow `--live`, night navy `--ink`; Barlow and Barlow Condensed, self-hosted through `@fontsource`. The landing hero is a live, non-interactive satellite map with the real pins; a "Where things are" board lists places with direction arrows and walking distances, and each row opens `#/map/<place-id>`. The Help and trip buttons now sit on the map, not over the panel.
+9. 3D landing page (28 October 2026): the hero is a scroll-driven 3D flight over the campus (`app/src/lib/campus3d.js`, three.js, loaded only on the landing page). Satellite tiles are stitched into ground textures (zoom 17 over campus, zoom 14 around it), each place gets a rising beam and label, and arcs run from DSU Main Campus to every place. Scroll effects use GSAP ScrollTrigger in `Home.jsx` (`useScrollEffects`): word-by-word headings, split-flap distances, greeting marquee, counters, 3D feature cards, pipeline progress line, reading bar. Reduced motion gives one still 3D view; no WebGL falls back to a flat Leaflet map. The camera path is the `WIDE_SHOTS` / `TALL_SHOTS` lists in `campus3d.js`.
 
 ## Unverified
 
