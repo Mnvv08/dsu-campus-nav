@@ -71,7 +71,8 @@
     Click along a footpath or road to lay down points. Press <b>Enter</b> to
     finish the path, or <b>Escape</b> to discard it. Ending near an existing
     point snaps to it, which is what turns separate paths into a connected
-    network. Tick <b>has steps</b> before finishing a stretch with stairs —
+    network. Clicking within 12 m of the <b>middle</b> of a path also joins it
+  (a white ring marks each join). Tick <b>has steps</b> before finishing a stretch with stairs —
     those are drawn dashed, and routing can be asked to avoid them.
   </div>
 
@@ -92,6 +93,7 @@
   <footer>
     <button id="loadPlaces">Load places</button>
     <button id="import">Load paths</button>
+    <button id="clear">Clear all</button>
     <button id="export" class="primary">Export</button>
     <input type="file" id="file" accept=".json">
     <input type="file" id="placefile" accept=".json">
@@ -127,7 +129,22 @@ function metres(a, b){
 // exported network is genuinely connected rather than visually adjacent.
 const pointsOf = p => (Array.isArray(p) ? p : p.points);
 
+// Nearest point on segment a-b to p, in a flat local projection (fine at
+// campus scale). Returns { pt, d } with d in metres.
+function onSegment(p, a, b){
+  const kx = 111320 * Math.cos(p[0] * Math.PI / 180), ky = 110540;
+  const ax = (a[1] - p[1]) * kx, ay = (a[0] - p[0]) * ky;
+  const bx = (b[1] - p[1]) * kx, by = (b[0] - p[0]) * ky;
+  const dx = bx - ax, dy = by - ay, len2 = dx * dx + dy * dy;
+  const t = len2 ? Math.max(0, Math.min(1, -(ax * dx + ay * dy) / len2)) : 0;
+  const x = ax + t * dx, y = ay + t * dy;
+  return { pt: [p[0] + y / ky, p[1] + x / kx], d: Math.hypot(x, y), t };
+}
+
+const round6 = v => [+v[0].toFixed(7), +v[1].toFixed(7)];
+
 function snap(ll){
+  // 1. An existing point nearby: reuse it exactly.
   let best = null, bestD = SNAP_M;
   for (const p of paths) for (const v of pointsOf(p)) {
     const d = metres(ll, v);
@@ -137,13 +154,42 @@ function snap(ll){
     const d = metres(ll, v);
     if (d < bestD) { bestD = d; best = v; }
   }
-  return best ? [...best] : ll;
+  if (best) return { pt: [...best], how: 'point' };
+
+  // 2. The middle of an existing line nearby: add a junction point to that
+  // line, so a branch joining mid-way is genuinely connected. Without this
+  // a T-junction only looked joined, and the network split in two.
+  let hit = null;
+  paths.forEach((p, i) => {
+    const pts = pointsOf(p);
+    for (let j = 1; j < pts.length; j++) {
+      const r = onSegment(ll, pts[j - 1], pts[j]);
+      if (r.d < SNAP_M && r.t > 0 && r.t < 1 && (!hit || r.d < hit.d)) hit = { ...r, i, j };
+    }
+  });
+  if (hit) {
+    const pt = round6(hit.pt);
+    pointsOf(paths[hit.i]).splice(hit.j, 0, pt);
+    drawn[hit.i].setLatLngs(pointsOf(paths[hit.i]));
+    save();
+    render();
+    return { pt: [...pt], how: 'line' };
+  }
+  return { pt: round6(ll), how: null };
+}
+
+let junctionMarks = [];
+function markJunction(pt){
+  const m = L.circleMarker(pt, { radius: 7, color: '#ffffff', weight: 2, fill: false }).addTo(map);
+  junctionMarks.push(m);
 }
 
 map.on('click', e => {
-  const pt = snap([e.latlng.lat, e.latlng.lng]);
+  const { pt, how } = snap([e.latlng.lat, e.latlng.lng]);
   draft.push(pt);
+  if (how) markJunction(pt);
   redrawDraft();
+  if (how) $('status').textContent += ' Joined to an existing path.';
 });
 
 function redrawDraft(){
@@ -172,17 +218,39 @@ function redrawDraft(){
   $('undo').disabled = draft.length === 0;
 }
 
+// Work is kept in this browser as you go, so a refresh or a closed tab
+// does not lose an evening of tracing. Export is still what updates the app.
+const STORE = 'dsu-pathmaker-v1';
+function save(){
+  try { localStorage.setItem(STORE, JSON.stringify(paths)); } catch {}
+}
+function drawPath(p){
+  drawn.push(L.polyline(pointsOf(p), {
+    color: p.steps ? '#ff9a6b' : '#4ee39a',
+    weight: 4,
+    opacity: .85,
+    dashArray: p.steps ? '8 6' : null
+  }).addTo(map));
+}
+function setPaths(list){
+  drawn.forEach(l => map.removeLayer(l));
+  drawn.length = 0;
+  junctionMarks.forEach(m => map.removeLayer(m));
+  junctionMarks = [];
+  paths = list;
+  paths.forEach(drawPath);
+  save();
+  render();
+}
+
 function finish(){
   if (draft.length < 2) return;
   const steps = $('steps').checked;
   paths.push({ points: draft, steps });
-  drawn.push(L.polyline(draft, {
-    color: steps ? '#ff9a6b' : '#4ee39a',
-    weight: 4,
-    opacity: .85,
-    dashArray: steps ? '8 6' : null
-  }).addTo(map));
+  drawPath(paths[paths.length - 1]);
+  $('steps').checked = false;
   draft = [];
+  save();
   redrawDraft();
   render();
 }
@@ -230,6 +298,7 @@ function render(){
       map.removeLayer(drawn[i]);
       drawn.splice(i, 1);
       paths.splice(i, 1);
+      save();
       render();
     });
     row.appendChild(del);
@@ -250,7 +319,7 @@ $('placefile').addEventListener('change', e => {
       (d.places || []).forEach(p => {
         L.circleMarker([p.lat, p.lng], {
           radius: 6, color: '#6db8ff', fillColor: '#6db8ff', fillOpacity: .9, weight: 2
-        }).addTo(map).bindTooltip(p.name, { direction:'top' });
+        }).addTo(map).bindTooltip(p.name, { direction:'top', permanent: true, opacity: .85 });
       });
     } catch { alert('That file could not be read as places JSON.'); }
   };
@@ -266,18 +335,8 @@ $('file').addEventListener('change', e => {
   r.onload = () => {
     try {
       const d = JSON.parse(r.result);
-      drawn.forEach(l => map.removeLayer(l));
-      drawn.length = 0;
-      paths = d.paths || [];
-      paths.forEach(p => drawn.push(
-        L.polyline(pointsOf(p), {
-          color: p.steps ? '#ff9a6b' : '#4ee39a',
-          weight: 4,
-          opacity: .85,
-          dashArray: p.steps ? '8 6' : null
-        }).addTo(map)
-      ));
-      render();
+      if (paths.length && !confirm('Replace the paths on screen with the ones in this file?')) return;
+      setPaths(d.paths || []);
       if (paths.length) map.fitBounds(paths.flatMap(pointsOf), { padding:[60,60] });
     } catch { alert('That file could not be read as paths JSON.'); }
   };
@@ -298,12 +357,28 @@ $('export').addEventListener('click', () => {
   URL.revokeObjectURL(a.href);
 });
 
-window.addEventListener('beforeunload', e => {
-  if (paths.length || draft.length) { e.preventDefault(); e.returnValue = ''; }
+$('clear').addEventListener('click', () => {
+  if (!paths.length) return;
+  if (!confirm('Remove every path on screen? Export first if you want to keep them.')) return;
+  discard();
+  setPaths([]);
 });
 
+window.addEventListener('beforeunload', e => {
+  if (draft.length) { e.preventDefault(); e.returnValue = ''; }
+});
+
+// Restore the last session's work, if any.
+try {
+  const kept = JSON.parse(localStorage.getItem(STORE) || '[]');
+  if (Array.isArray(kept) && kept.length) {
+    setPaths(kept);
+    $('status').textContent = `Restored ${kept.length} paths from your last session.`;
+  }
+} catch {}
+
 render();
-redrawDraft();
+if (!paths.length) redrawDraft();
 </script>
 </body>
 </html>
