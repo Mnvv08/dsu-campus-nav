@@ -54,9 +54,11 @@ function anchorFromUrl(places) {
   return id ? places.find(p => p.id === id) ?? null : null;
 }
 
-export default function App({ startChat = false, onHome }) {
+export default function App({ startChat = false, startPlace = null, onHome }) {
   const [query, setQuery] = useState('');
-  const [selected, setSelected] = useState(null);
+  const [selected, setSelected] = useState(
+    () => (startPlace && (campus.places ?? []).find(p => p.id === startPlace)) || null
+  );
   const [filter, setFilter] = useState(null);
   const [position, setPosition] = useState(null);
   const [accuracy, setAccuracy] = useState(null);

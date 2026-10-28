@@ -1,15 +1,11 @@
 /* Landing page. Scoped under .site so nothing here reaches the map UI.
-   The editorial palette is pulled from the campus itself as seen from
-   above — sand, bare ground and terracotta roofs — while mint stays
-   reserved for things you can actually press. */
+
+   The look is borrowed from Indian campus and road direction boards:
+   signboard blue panels with white condensed lettering, signal yellow for
+   the one thing to press, night navy around them. Colour tokens live in
+   index.css (:root) so the map app and this page stay one product. */
 
 .site {
-  --sand: #d99a52;
-  --paper: #e8e2d6;
-  --dim: #96907f;
-  --edge: #2e2a22;
-  --deep: #14120e;
-
   /* body is a flex row for the map/panel split, so the landing page has
      to claim the full width rather than shrink to its content. */
   flex: 1;
@@ -17,148 +13,269 @@
   min-width: 0;
   height: 100%;
   overflow-y: auto;
-  background: var(--deep);
-  color: var(--paper);
-  font: 16px/1.6 "Inter", system-ui, -apple-system, sans-serif;
+  scroll-behavior: smooth;
+  background: var(--ink);
+  color: var(--text);
+  font: 17px/1.6 var(--font-body);
 }
+@media (prefers-reduced-motion: reduce) { .site { scroll-behavior: auto; } }
 
-.site h1, .site h2, .site h3 { letter-spacing: -.025em; }
+.site h1, .site h2, .site h3 {
+  font-family: var(--font-sign);
+  font-weight: 700;
+  letter-spacing: -.005em;
+}
 .site a { color: inherit; }
 
 /* Nav */
 .sitenav {
-  position: sticky; top: 0; z-index: 10;
+  position: sticky; top: 0; z-index: 1100;
   display: flex; align-items: center; justify-content: space-between;
   gap: 20px;
-  padding: 16px 40px;
-  background: rgba(20, 18, 14, .92);
-  backdrop-filter: blur(8px);
-  border-bottom: 1px solid var(--edge);
+  padding: 14px 40px;
+  background: rgba(10, 27, 51, .9);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid var(--line);
 }
-.mark { font-size: 14px; font-weight: 600; }
-.navlinks { display: flex; gap: 22px; }
-.navlinks a { color: var(--dim); font-size: 14px; text-decoration: none; }
-.navlinks a:hover { color: var(--paper); }
+.mark {
+  display: flex; align-items: center; gap: 9px;
+  font: 700 19px/1 var(--font-sign);
+}
+.mark svg { width: 20px; height: 20px; fill: var(--live); }
+.navlinks { display: flex; gap: 26px; }
+.navlinks a { color: var(--muted); font-size: 15px; text-decoration: none; }
+.navlinks a:hover { color: var(--text); }
 
-/* Hero */
+/* Hero: the satellite map fills the frame, the signboard sits on it. */
 .hero {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 520px);
-  gap: 56px; align-items: center;
-  padding: 84px 40px 96px;
-  max-width: 1180px; margin: 0 auto;
+  position: relative;
+  min-height: min(88vh, 820px);
+  display: flex; align-items: center;
+  padding: 64px 40px;
+  overflow: hidden;
+  isolation: isolate;
 }
-.hero h1 {
-  margin: 0;
-  font-size: clamp(38px, 5vw, 60px);
-  font-weight: 700;
-  line-height: 1.05;
-  max-width: 12ch;
+.heromap {
+  position: absolute; inset: 0; z-index: -1;
+  background: #1b2a1f;
 }
-.lede { margin: 22px 0 0; color: var(--dim); font-size: 18px; max-width: 54ch; }
-.lede.narrow { max-width: 60ch; }
+/* Darken the imagery towards the board so the type never fights it. */
+.hero::after {
+  content: ''; position: absolute; inset: 0; z-index: -1; pointer-events: none;
+  background: linear-gradient(90deg, rgba(10,27,51,.78) 0%, rgba(10,27,51,.35) 45%, rgba(10,27,51,0) 70%),
+              linear-gradient(0deg, var(--ink) 0%, rgba(10,27,51,0) 22%);
+}
+.heromap .leaflet-control-attribution { font-size: 10px; }
 
-.actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 32px; }
-.go, .alt {
-  font: inherit; font-size: 15px; font-weight: 600;
-  padding: 12px 22px; border-radius: 8px; cursor: pointer;
-  border: 1px solid transparent;
+.signboard {
+  position: relative;
+  width: min(580px, 100%);
+  margin-left: max(0px, calc((100vw - 1180px) / 2));
+  padding: 38px 40px 34px;
+  background: var(--board);
+  color: #fff;
+  border-radius: 10px;
+  /* The thin white inset border every painted direction board has. */
+  box-shadow: inset 0 0 0 3px var(--board), inset 0 0 0 5px rgba(255,255,255,.9),
+              0 30px 60px rgba(4, 12, 26, .55);
 }
-.go { background: #4ee39a; color: #06170f; }
-.go:hover { filter: brightness(1.08); }
-.alt {
-  background: none; color: var(--paper);
-  border-color: var(--edge);
+.signboard h1 {
+  margin: 0;
+  font-size: clamp(44px, 6.2vw, 76px);
+  line-height: .98;
+  letter-spacing: -.01em;
+  text-wrap: balance;
+}
+.signlede {
+  margin: 20px 0 0;
+  font-size: 18px; line-height: 1.55;
+  color: rgba(255,255,255,.86);
+  max-width: 46ch;
+}
+.signboard .actions { margin-top: 28px; }
+.signboard .counts { color: rgba(255,255,255,.72); }
+
+.actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 30px; }
+.go, .alt {
+  font: 600 20px/1 var(--font-sign);
+  letter-spacing: .01em;
+  padding: 15px 28px; border-radius: 8px; cursor: pointer;
+  border: 2px solid transparent;
   text-decoration: none; display: inline-block;
 }
-.alt:hover { border-color: var(--sand); }
+.go { background: var(--live); color: var(--on-live); }
+.go:hover { background: #ffd357; }
+.alt { background: none; color: var(--text); border-color: var(--line); }
+.alt:hover { border-color: var(--text); }
 
-.counts { margin: 22px 0 0; color: var(--dim); font-size: 14px; }
+.counts { margin: 18px 0 0; color: var(--muted); font-size: 15px; }
 
-.plan { width: 100%; height: auto; border: 1px solid var(--edge); border-radius: 6px; }
+/* Pins land one after another when the page opens. */
+.heropin .pin2 { animation: pindrop .5s cubic-bezier(.2, .9, .3, 1.3) both; animation-delay: var(--delay, 0ms); }
+@keyframes pindrop {
+  from { opacity: 0; transform: translate(-50%, -140%) scale(.6); }
+  to   { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+}
+@media (prefers-reduced-motion: reduce) { .heropin .pin2 { animation: none; } }
 
 /* Bands */
 .band {
   max-width: 1180px; margin: 0 auto;
-  padding: 72px 40px;
-  border-top: 1px solid var(--edge);
+  padding: 88px 40px;
 }
-.band h2 {
-  margin: 0 0 34px;
-  font-size: clamp(26px, 3vw, 34px);
-  font-weight: 650;
+.band + .band { border-top: 1px solid var(--line); }
+.band h2, .paperband h2 {
+  margin: 0 0 30px;
+  font-size: clamp(34px, 4vw, 48px);
+  line-height: 1.05;
 }
-.aside { margin: 34px 0 0; color: var(--dim); font-size: 15px; max-width: 62ch; }
+.lede { margin: 0; color: var(--muted); font-size: 19px; max-width: 60ch; }
+.aside { margin: 30px 0 0; color: var(--muted); font-size: 16px; max-width: 62ch; }
 
-/* Facts — deliberately unequal, the number is the point */
-.facts { display: grid; grid-template-columns: repeat(3, 1fr); gap: 34px; }
+/* Destination board */
+.boardband { padding-top: 72px; }
+.boardhead { display: flex; align-items: baseline; justify-content: space-between; gap: 12px 40px; flex-wrap: wrap; margin-bottom: 26px; }
+.boardhead h2 { margin: 0; }
+.boardhead p { margin: 0; color: var(--muted); font-size: 16px; max-width: 46ch; }
+
+.board {
+  list-style: none; margin: 0;
+  display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px;
+  background: var(--board);
+  border-radius: 12px;
+  box-shadow: inset 0 0 0 3px var(--board), inset 0 0 0 5px rgba(255,255,255,.9);
+  padding: 14px;
+}
+.boardrow {
+  width: 100%;
+  display: grid; grid-template-columns: 44px minmax(0, 1fr) auto; align-items: center; gap: 16px;
+  padding: 14px 16px;
+  background: none; border: 0; border-radius: 6px;
+  color: #fff; text-align: left;
+  font: inherit;
+}
+.boardrow:hover { background: rgba(255,255,255,.1); }
+.boardarrow {
+  width: 40px; height: 40px; padding: 6px;
+  fill: var(--board); background: #fff; border-radius: 50%;
+  transition: transform .3s ease;
+}
+.boardname { display: flex; flex-direction: column; min-width: 0; }
+.boardname strong {
+  font: 600 23px/1.15 var(--font-sign);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.boardname > span { font-size: 14px; color: rgba(255,255,255,.75); margin-top: 3px; }
+.boardunv {
+  font-style: normal; margin-left: 8px;
+  padding: 1px 8px; border-radius: 999px;
+  background: var(--live); color: var(--on-live); font-size: 12px; font-weight: 600;
+}
+.boarddist { display: flex; flex-direction: column; align-items: flex-end; }
+.boarddist strong { font: 700 24px/1.1 var(--font-sign); color: var(--live); }
+.boarddist span { font-size: 13px; color: rgba(255,255,255,.75); }
+
+/* Facts: the numbers are the content here. */
+.facts { display: grid; grid-template-columns: 1.3fr 1fr 1fr; gap: 40px; align-items: end; }
 .fact b {
   display: block;
-  font-size: 40px; font-weight: 700;
-  color: var(--sand);
-  line-height: 1;
+  font: 700 56px/1 var(--font-sign);
+  color: var(--live);
   margin-bottom: 12px;
 }
-.fact.big b { font-size: 62px; }
-.fact p { margin: 0; color: var(--dim); font-size: 15px; }
+.fact.big b { font-size: 104px; }
+.fact p { margin: 0; color: var(--muted); font-size: 16px; max-width: 34ch; }
 
-/* Feature list as definitions, not cards */
-.does { display: grid; grid-template-columns: repeat(2, 1fr); gap: 30px 46px; margin: 0; }
-.does dt { font-size: 17px; font-weight: 600; margin-bottom: 7px; }
-.does dd { margin: 0; color: var(--dim); font-size: 15px; }
+/* Features on a light band, for one change of pace down the page. */
+.paperband { background: var(--paper); color: var(--paper-ink); }
+.paperinner { max-width: 1180px; margin: 0 auto; padding: 88px 40px; }
+.does { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 40px 44px; margin: 0; }
+.does div { border-top: 4px solid var(--board); padding-top: 16px; }
+.does dt { font: 600 24px/1.15 var(--font-sign); margin-bottom: 8px; }
+.does dd { margin: 0; color: #3d4c63; font-size: 16px; }
 
-/* Pipeline — numbered because it genuinely is a sequence.
-   The number is a real element, not a ::before: a pseudo-element counts
-   as a grid item too, and with three items (number, heading, paragraph)
-   against two columns, the layout wraps unpredictably — the paragraph
-   was landing in the 54px number column and breaking one word per line. */
-.pipeline { list-style: none; margin: 38px 0 0; padding: 0; }
+/* Pipeline: numbered because it genuinely is a sequence. The number is a
+   real element, not a ::before, so the two-column grid stays stable. */
+.pipeline { list-style: none; margin: 40px 0 0; padding: 0; }
 .pipeline li {
-  display: grid; grid-template-columns: 54px minmax(0, 1fr); gap: 22px;
-  padding: 24px 0;
-  border-top: 1px solid var(--edge);
+  display: grid; grid-template-columns: 64px minmax(0, 1fr); gap: 22px;
+  padding: 26px 0;
+  border-top: 1px solid var(--line);
 }
 .pipeline .stepnum {
-  font-size: 26px; font-weight: 700; color: var(--sand);
-  line-height: 1.1;
+  width: 48px; height: 48px;
+  display: flex; align-items: center; justify-content: center;
+  font: 700 26px/1 var(--font-sign);
+  color: var(--on-live); background: var(--live);
+  border-radius: 50%;
 }
-.pipeline h3 { margin: 0 0 6px; font-size: 18px; font-weight: 600; }
-.pipeline p { margin: 0; color: var(--dim); font-size: 15px; max-width: 66ch; }
+.pipeline h3 { margin: 4px 0 6px; font-size: 26px; font-weight: 600; }
+.pipeline p { margin: 0; color: var(--muted); font-size: 16px; max-width: 66ch; }
 
-.closing .actions { margin-top: 30px; }
+/* Closing: coverage and corrections side by side. */
+.closegrid { display: grid; grid-template-columns: 1fr 1fr; gap: 64px; }
+.closegrid h2 { font-size: clamp(30px, 3.2vw, 40px); }
+.coveragebar {
+  width: 100%; height: 14px; border-radius: 999px;
+  background: var(--line); overflow: hidden; margin: 0 0 18px;
+}
+.coveragefill { height: 100%; background: var(--live); border-radius: 999px; }
 
 .sitefoot {
   max-width: 1180px; margin: 0 auto;
   padding: 40px 40px 64px;
-  border-top: 1px solid var(--edge);
-  color: var(--dim); font-size: 13px;
+  border-top: 1px solid var(--line);
+  color: var(--muted); font-size: 14px;
 }
 .sitefoot p { margin: 0 0 8px; max-width: 74ch; }
 
 .site button:focus-visible, .site a:focus-visible {
-  outline: 2px solid #4ee39a; outline-offset: 3px;
+  outline: 3px solid var(--live); outline-offset: 3px;
+}
+
+@media (max-width: 1000px) {
+  .does { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .board { grid-template-columns: 1fr; }
 }
 
 @media (max-width: 900px) {
-  .hero { grid-template-columns: 1fr; gap: 40px; padding: 56px 22px 64px; }
-  .facts, .does { grid-template-columns: 1fr; gap: 26px; }
-  .fact.big b { font-size: 48px; }
-  .band { padding: 52px 22px; }
-  .sitenav { padding: 14px 22px; }
+  .sitenav { padding: 12px 18px; }
   .navlinks { gap: 16px; }
-  .navlinks a:nth-child(3) { display: none; }
-  .sitefoot { padding: 32px 22px 48px; }
+  .navlinks a:nth-child(2), .navlinks a:nth-child(3) { display: none; }
+  .mark { font-size: 18px; white-space: nowrap; }
+  /* The board overlaps the bottom of the map; keep the imagery credit
+     above it. */
+  .heromap .leaflet-bottom { bottom: 60px; }
+
+  /* Phone: the map shows on top, the board hangs below it. */
+  .hero {
+    display: block; min-height: 0;
+    padding: 0;
+  }
+  .heromap { position: relative; inset: auto; height: 52vh; min-height: 300px; z-index: 0; }
+  .hero::after { display: none; }
+  .signboard {
+    width: auto; margin: -56px 14px 0;
+    padding: 28px 24px 26px;
+  }
+  .signboard h1 { font-size: clamp(40px, 11.5vw, 56px); }
+  .signlede { font-size: 17px; }
+
+  .band, .paperinner { padding: 60px 18px; }
+  .boardband { padding-top: 56px; }
+  .board { padding: 8px; }
+  .boardrow { grid-template-columns: 36px minmax(0, 1fr) auto; gap: 12px; padding: 12px 10px; }
+  .boardarrow { width: 34px; height: 34px; padding: 5px; }
+  .boardname strong { font-size: 20px; white-space: normal; }
+  .boardunv { display: inline-block; margin: 4px 0 0; }
+  .boardname > span { display: flex; flex-direction: column; align-items: flex-start; }
+  .boarddist strong { font-size: 21px; }
+
+  .facts, .does, .closegrid { grid-template-columns: 1fr; gap: 30px; }
+  .fact.big b { font-size: 80px; }
+  .fact b { font-size: 48px; }
+  .sitefoot { padding: 32px 18px 48px; }
 }
-
-
 
 /* Install prompt sits above the sticky nav on the landing page */
-.site .installbar { position: sticky; top: 0; z-index: 20; }
-
-/* Data coverage bar */
-.coveragebar {
-  width: 100%; height: 10px; border-radius: 999px;
-  background: var(--edge); overflow: hidden; margin: 4px 0 18px;
-}
-.coveragefill { height: 100%; background: var(--live); border-radius: 999px; transition: width .4s ease; }
-
+.site .installbar { position: sticky; top: 0; z-index: 1200; }

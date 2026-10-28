@@ -9,6 +9,8 @@ import './site.css';
 // static host under a subpath, and the hash needs no server rewrites and
 // no extra dependency for two screens.
 const routeFromHash = () => (window.location.hash.startsWith('#/map') ? 'map' : 'home');
+// #/map/<place-id> opens the map with that place selected.
+const placeFromHash = () => window.location.hash.match(/^#\/map\/([\w-]+)/)?.[1] ?? null;
 
 export default function Shell() {
   const [route, setRoute] = useState(routeFromHash);
@@ -34,6 +36,7 @@ export default function Shell() {
     return (
       <App
         startChat={openChat}
+        startPlace={placeFromHash()}
         onHome={() => { setOpenChat(false); window.location.hash = '#/'; }}
       />
     );
@@ -42,6 +45,7 @@ export default function Shell() {
   return (
     <Home
       onEnter={() => go('#/map')}
+      onOpenPlace={id => go(`#/map/${id}`)}
       placeCount={(campus.places ?? []).length}
       pathCount={(pathData.paths ?? []).length}
     />

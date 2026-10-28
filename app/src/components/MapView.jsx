@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, useCallback, useMemo } from 'react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { colorFor, iconFor, categoryLabel, distance, LABEL_PRIORITY } from '../lib/categories';
+import { placeIcon } from '../lib/pinIcon';
 import { t } from '../lib/i18n';
 import pathData from '../data/paths.json';
 import buildingData from '../data/buildings.json';
@@ -41,26 +42,6 @@ function excludeOutliers(places) {
   return kept.length >= places.length / 2 ? kept : places;
 }
 
-// A round badge with a consistent line icon, rather than an emoji. Emoji
-// render differently on every phone and are often illegible at pin size.
-// Places that are not confirmed get a dashed ring and a "?" so the map
-// itself is honest about uncertainty, not only the detail sheet.
-const placeIcon = (p, active) => {
-  const unverified = p.confidence && p.confidence !== 'confirmed';
-  return L.divIcon({
-    className: '',
-    html: `
-      <span class="pin2${active ? ' pin2-active' : ''}${unverified ? ' pin2-unverified' : ''}"
-            style="--pin:${colorFor(p.category)}">
-        <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="#fff"
-             stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">${iconFor(p.category)}</svg>
-        ${unverified ? '<i class="pin2-q">?</i>' : ''}
-      </span>`,
-    iconSize: [34, 34],
-    iconAnchor: [17, 17]
-  });
-};
-
 const youIcon = L.divIcon({
   className: '',
   html: '<span class="you"><span class="you-pulse"></span></span>',
@@ -78,7 +59,7 @@ const startIcon = L.divIcon({
 const endIcon = L.divIcon({
   className: '',
   html: `<span class="routedot routedot-end">
-           <svg viewBox="0 0 24 24" width="14" height="14" fill="#06170f">
+           <svg viewBox="0 0 24 24" width="14" height="14" fill="#061428">
              <path d="M6 3v18h2v-7h9l-2-4 2-4H8V3z"/>
            </svg>
          </span>`,
@@ -395,8 +376,8 @@ export default function MapView({ center, places, selected, onSelect, position, 
     const last = routeLine[routeLine.length - 1];
 
     line.current = L.layerGroup([
-      L.polyline(routeLine, { color: '#06170f', weight: 10, opacity: .6, lineCap: 'round', lineJoin: 'round' }),
-      L.polyline(routeLine, { color: '#4ee39a', weight: 5, opacity: 1, lineCap: 'round', lineJoin: 'round' }),
+      L.polyline(routeLine, { color: '#061428', weight: 10, opacity: .7, lineCap: 'round', lineJoin: 'round' }),
+      L.polyline(routeLine, { color: '#ffc72c', weight: 5, opacity: 1, lineCap: 'round', lineJoin: 'round' }),
       L.polyline(routeLine, {
         color: '#ffffff', weight: 2, opacity: .85, dashArray: '1 14',
         lineCap: 'round', className: 'route-flow'
@@ -418,9 +399,9 @@ export default function MapView({ center, places, selected, onSelect, position, 
     if (!you.current) {
       halo.current = L.circle(ll, {
         radius: accuracy ?? 0,
-        color: '#4ee39a',
+        color: '#ffc72c',
         weight: 1,
-        fillColor: '#4ee39a',
+        fillColor: '#ffc72c',
         fillOpacity: 0.1
       }).addTo(m);
       you.current = L.marker(ll, { icon: youIcon, zIndexOffset: 900 }).addTo(m);

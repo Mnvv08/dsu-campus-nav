@@ -70,6 +70,7 @@ The token lasts only for that Terminal window.
 5. Building outline tool (`tools/buildmaker.html`) and outline drawing in the map at zoom 16+ (`buildings.json` still empty).
 6. Data validator (`npm run validate` in `app/`).
 7. Worker hardened and deployed (see above).
+8. Visual redesign (28 October 2026): a direction-board look shared by the landing page and the map app. Tokens in `app/src/index.css` (`:root`): signboard blue `--board`, signal yellow `--live`, night navy `--ink`; Barlow and Barlow Condensed, self-hosted through `@fontsource`. The landing hero is a live, non-interactive satellite map with the real pins; a "Where things are" board lists places with direction arrows and walking distances, and each row opens `#/map/<place-id>`. The Help and trip buttons now sit on the map, not over the panel.
 
 ## Unverified
 
