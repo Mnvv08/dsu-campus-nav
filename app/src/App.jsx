@@ -1,7 +1,8 @@
 import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import MapView from './components/MapView';
 import Chat from './components/Chat';
-import Navigate from './components/Navigate';
+import NavScreen from './components/NavScreen';
+import { navUi } from './lib/dirText';
 import StepIcon from './components/StepIcon';
 import { buildSteps } from './lib/navigate';
 import { stepText, stepHint } from './lib/dirText';
@@ -333,12 +334,22 @@ export default function App({ startChat = false, startPlace = null, onHome }) {
   // the live route is recalculated from every new position fix, which
   // would otherwise keep jumping the walker back to step 1.
   const [guide, setGuide] = useState(null);
+  const liveNav = Boolean(position && !fromPlace);
   const startGuide = () => {
-    setGuide({ steps, coords: walk.coords });
+    setGuide({ steps, coords: walk.coords, live: liveNav });
     setActiveStep(0);
     setNavOn(true);
   };
   const shownSteps = navOn && guide ? guide.steps : steps;
+
+  // Off the route: take the directions freshly worked out from where the
+  // walker now is. They are recalculated from every GPS fix anyway.
+  const latest = useRef({ steps, walk });
+  useEffect(() => { latest.current = { steps, walk }; }, [steps, walk]);
+  const reroute = useCallback(() => {
+    const { steps: s, walk: w } = latest.current;
+    if (s.length > 1 && w && !w.direct) setGuide({ steps: s, coords: w.coords, live: true });
+  }, []);
 
   const fromValue = fromId ?? (position || locating ? '__me' : anchor ? anchor.id : '');
   const chooseFrom = v => {
@@ -567,16 +578,16 @@ export default function App({ startChat = false, startPlace = null, onHome }) {
       </aside>
 
       {navOn && guide && (
-        <Navigate
+        <NavScreen
           steps={guide.steps}
-          index={activeStep ?? 0}
-          onIndex={setActiveStep}
+          places={places}
+          destination={selected}
           position={position}
-          live={Boolean(position && !fromPlace)}
-          coords={guide.coords}
-          place={selected}
+          accuracy={accuracy}
+          live={guide.live}
           lang={lang}
-          onClose={() => setNavOn(false)}
+          onReroute={reroute}
+          onExit={() => setNavOn(false)}
         />
       )}
 
@@ -688,8 +699,8 @@ export default function App({ startChat = false, startPlace = null, onHome }) {
 
           {routing && steps.length > 1 && (
             <div className="dirs">
-              <button className="primary route" onClick={startGuide}>
-                {t('stepByStep', lang)}
+              <button className="primary route navstart" onClick={startGuide}>
+                {liveNav ? `▲ ${navUi('start', lang)}` : navUi('preview', lang)}
               </button>
               <p className="dirshint">{t('tapStep', lang)}</p>
               <ol className="steplist">

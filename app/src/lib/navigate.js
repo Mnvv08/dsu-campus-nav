@@ -175,6 +175,10 @@ export function buildSteps(coords, { names = [], places = [], originId = null, d
   // step ("Walk along the lake road"), not a step of its own.
   if (legs.length > 1 && legs[0].road === null && legs[0].metres < 65) {
     const [stub, first] = legs;
+    // If joining the path means turning onto it, say so ("Walk to the
+    // lakeside path, then turn left").
+    const join = turnAngle(headingFrom(stub.pts, true), headingFrom(first.pts));
+    if (Math.abs(join) >= 45) first.joinTurn = classifyTurn(join);
     first.pts = [...stub.pts, ...first.pts.slice(1)];
     first.metres += stub.metres;
     legs.shift();
@@ -223,6 +227,7 @@ export function buildSteps(coords, { names = [], places = [], originId = null, d
       }
       step.towards = best;
       step.direction = compassWord(h);
+      step.joinTurn = leg.joinTurn ?? null;
     } else {
       const angle = turnAngle(headingFrom(legs[k - 1].pts, true), headingFrom(leg.pts));
       step.turn = classifyTurn(angle);

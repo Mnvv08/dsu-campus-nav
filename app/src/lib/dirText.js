@@ -69,6 +69,7 @@ export function stepText(step, lang) {
     if (step.kind === 'depart') {
       const towards = name(step.towards, L);
       if (!step.road && step.nextRoad) return `Walk to ${step.nextRoad}`;
+      if (step.road && step.joinTurn) return `Walk to ${step.road}, then ${TURN.en[step.joinTurn].toLowerCase()}`;
       if (step.road) return `Walk along ${step.road}${towards ? `, towards ${towards}` : ''}`;
       return towards ? `Walk towards ${towards}` : `Head ${step.direction}`;
     }
@@ -82,6 +83,7 @@ export function stepText(step, lang) {
   if (step.kind === 'depart') {
     const towards = name(step.towards, L);
     if (!step.road && step.nextRoad) return DEPART[L].path;
+    if (step.joinTurn) return `${DEPART[L].path}, ${TURN[L][step.joinTurn]}`;
     return towards ? DEPART[L].towards(towards) : DEPART[L].plain;
   }
   const verb = TURN[L][step.kind === 'continue' ? 'straight' : step.turn];
@@ -100,3 +102,50 @@ export const TURN_DEG = {
   straight: 0, 'slight-left': -40, 'slight-right': 40, left: -90, right: 90,
   'sharp-left': -135, 'sharp-right': 135, 'u-turn': 180
 };
+
+// ---- Full-screen navigation: spoken phrases and labels ----------------
+
+const lower = (s, lang) => (lang === 'en' ? s.charAt(0).toLowerCase() + s.slice(1) : s);
+
+// "In 50 metres, turn left onto ..."
+const IN = {
+  en: (m, s) => `In ${m} metres, ${s}`,
+  kn: (m, s) => `${m} ಮೀಟರ್ ನಂತರ, ${s}`,
+  hi: (m, s) => `${m} मीटर बाद, ${s}`,
+  ta: (m, s) => `${m} மீட்டரில், ${s}`,
+  te: (m, s) => `${m} మీటర్ల తర్వాత, ${s}`,
+  ml: (m, s) => `${m} മീറ്റർ കഴിഞ്ഞ്, ${s}`,
+  gu: (m, s) => `${m} મીટર પછી, ${s}`
+};
+export function sayIn(metres, step, lang) {
+  const L = IN[lang] ? lang : 'en';
+  const m = metres >= 100 ? Math.round(metres / 50) * 50 : Math.max(10, Math.round(metres / 10) * 10);
+  // Arrival lines start with the place name, which keeps its capital.
+  return IN[L](m, step.kind === 'arrive' ? stepText(step, L) : lower(stepText(step, L), L));
+}
+
+const NAV_UI = {
+  then: { en: 'Then', kn: 'ನಂತರ', hi: 'फिर', ta: 'பிறகு', te: 'తర్వాత', ml: 'പിന്നെ', gu: 'પછી' },
+  rerouting: {
+    en: 'Off route. Finding a new route.', kn: 'ದಾರಿ ತಪ್ಪಿದೆ. ಹೊಸ ದಾರಿ ಹುಡುಕುತ್ತಿದೆ.', hi: 'रास्ते से हट गए। नया रास्ता खोजा जा रहा है।',
+    ta: 'பாதையை விட்டு விலகிவிட்டீர்கள். புதிய வழி தேடப்படுகிறது.', te: 'దారి తప్పారు. కొత్త దారి వెతుకుతోంది.',
+    ml: 'വഴി തെറ്റി. പുതിയ വഴി തിരയുന്നു.', gu: 'રસ્તો ચૂકી ગયા. નવો રસ્તો શોધી રહ્યા છીએ.'
+  },
+  arrived: {
+    en: p => `You have arrived at ${p}`, kn: p => `ನೀವು ${p} ತಲುಪಿದ್ದೀರಿ`, hi: p => `आप ${p} पहुँच गए हैं`,
+    ta: p => `நீங்கள் ${p} வந்தடைந்தீர்கள்`, te: p => `మీరు ${p} చేరుకున్నారు`, ml: p => `നിങ്ങൾ ${p} എത്തി`, gu: p => `તમે ${p} પહોંચી ગયા છો`
+  },
+  start: { en: 'Start', kn: 'ಪ್ರಾರಂಭಿಸಿ', hi: 'शुरू करें', ta: 'தொடங்கு', te: 'ప్రారంభించు', ml: 'ആരംഭിക്കുക', gu: 'શરૂ કરો' },
+  preview: { en: 'Preview route', kn: 'ದಾರಿ ನೋಡಿ', hi: 'रास्ता देखें', ta: 'வழியைப் பார்', te: 'దారి చూడండి', ml: 'വഴി കാണുക', gu: 'રસ્તો જુઓ' },
+  exit: { en: 'Exit', kn: 'ನಿರ್ಗಮಿಸಿ', hi: 'बाहर निकलें', ta: 'வெளியேறு', te: 'నిష్క్రమించు', ml: 'പുറത്തുകടക്കുക', gu: 'બહાર નીકળો' },
+  done: { en: 'Done', kn: 'ಆಯಿತು', hi: 'हो गया', ta: 'முடிந்தது', te: 'పూర్తయింది', ml: 'കഴിഞ്ഞു', gu: 'થઈ ગયું' },
+  recentre: { en: 'Re-centre', kn: 'ಮಧ್ಯಕ್ಕೆ', hi: 'वापस केंद्र में', ta: 'மையப்படுத்து', te: 'మధ్యకు', ml: 'മധ്യത്തിലേക്ക്', gu: 'મધ્યમાં' },
+  overview: { en: 'Whole route', kn: 'ಪೂರ್ತಿ ದಾರಿ', hi: 'पूरा रास्ता', ta: 'முழு வழி', te: 'మొత్తం దారి', ml: 'മുഴുവൻ വഴി', gu: 'આખો રસ્તો' },
+  arrival: { en: 'arrival', kn: 'ತಲುಪುವ ಸಮಯ', hi: 'पहुँचने का समय', ta: 'வருகை', te: 'చేరే సమయం', ml: 'എത്തുന്ന സമയം', gu: 'પહોંચવાનો સમય' },
+  min: { en: 'min', kn: 'ನಿಮಿಷ', hi: 'मिनट', ta: 'நிமி', te: 'నిమి', ml: 'മിനിറ്റ്', gu: 'મિનિટ' },
+  waiting: {
+    en: 'Waiting for your location…', kn: 'ನಿಮ್ಮ ಸ್ಥಳಕ್ಕಾಗಿ ಕಾಯುತ್ತಿದೆ…', hi: 'आपकी जगह का इंतज़ार…',
+    ta: 'உங்கள் இருப்பிடத்திற்காகக் காத்திருக்கிறது…', te: 'మీ స్థానం కోసం వేచి ఉంది…', ml: 'നിങ്ങളുടെ സ്ഥലത്തിനായി കാത്തിരിക്കുന്നു…', gu: 'તમારા સ્થાનની રાહ જોવાય છે…'
+  }
+};
+export const navUi = (key, lang) => NAV_UI[key]?.[lang] ?? NAV_UI[key]?.en;
