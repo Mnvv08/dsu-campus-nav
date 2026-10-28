@@ -1,2 +1,4 @@
 .wrangler/
 node_modules/
+# Local file wrangler leaves after registering the workers.dev subdomain.
+.workers.dev

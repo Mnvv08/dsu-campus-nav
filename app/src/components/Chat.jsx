@@ -1,21 +1,11 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { t, placeName, VOICE_LOCALE } from '../lib/i18n';
+import { t, VOICE_LOCALE } from '../lib/i18n';
 
 const ENDPOINT = import.meta.env.VITE_CHAT_URL ?? '';
 
-// Only the fields the model needs. Sending the whole file would waste
-// tokens on coordinates precision and internal ids nobody reads.
-const forModel = places =>
-  places.map(p => ({
-    name: p.name,
-    aliases: p.aliases,
-    category: p.category,
-    confidence: p.confidence,
-    notes: p.notes,
-    units: p.units,
-    lat: p.lat,
-    lng: p.lng
-  }));
+// The Worker builds the assistant's place list from its own bundled copy of
+// places.json, so only the conversation is sent. Sending places from the
+// browser was how the old Worker could be fed fake instructions.
 
 export default function Chat({ places, lang, onClose, onMention }) {
   const [messages, setMessages] = useState([]);
@@ -98,7 +88,7 @@ export default function Chat({ places, lang, onClose, onMention }) {
       const res = await fetch(ENDPOINT, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ messages: next, places: forModel(places) })
+        body: JSON.stringify({ messages: next })
       });
 
       const data = await res.json().catch(() => ({}));

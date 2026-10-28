@@ -2,6 +2,13 @@ name = "dsu-campus-chat"
 main = "index.js"
 compatibility_date = "2025-01-01"
 
+# Serve at https://dsu-campus-chat.dsu-nav.workers.dev (the URL the live
+# site uses, set in the VITE_CHAT_URL repo secret). Per-version preview
+# URLs are off: the site never uses them, so they would only be extra ways
+# to reach the Worker.
+workers_dev = true
+preview_urls = false
+
 # The API key is set with `wrangler secret put ANTHROPIC_API_KEY`.
 # Never put it in this file — wrangler.toml is committed to the repo.
 
