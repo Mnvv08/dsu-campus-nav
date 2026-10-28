@@ -21,14 +21,6 @@ function turnAngle(inBearing, outBearing) {
   return d;
 }
 
-function classify(angle) {
-  const a = Math.abs(angle);
-  if (a < 20) return 'straight';
-  if (a < 130) return angle < 0 ? 'left' : 'right';
-  if (a < 165) return angle < 0 ? 'sharp-left' : 'sharp-right';
-  return 'u-turn';
-}
-
 function compassWord(deg) {
   const dirs = ['north', 'northeast', 'east', 'southeast', 'south', 'southwest', 'west', 'northwest'];
   return dirs[Math.round(deg / 45) % 8];
@@ -41,79 +33,222 @@ function compassWord(deg) {
  * actually bends enough to matter, which is what makes this read like
  * directions rather than "go 4m, go 6m, go 3m" for every traced vertex.
  */
-// route.js stitches [origin, ...snapped graph nodes..., destination].
-// Origin/destination usually land a few centimetres from their nearest
-// graph node, not exactly on it, so consecutive points can be almost
-// duplicates. Bearing between two points that close is numerical noise,
-// not a real direction, and was showing up as a phantom "turn right"
-// with 0m to walk. Collapsing near-duplicates before any bearing math
-// runs removes the noise at the source.
+// Points closer together than this are treated as one: the bearing
+// between them is numerical noise, not a direction.
 const MIN_LEG_M = 3;
 
-function dedupeClose(pts) {
-  const out = [pts[0]];
-  for (let i = 1; i < pts.length; i++) {
-    const last = out[out.length - 1];
-    const isFinal = i === pts.length - 1;
-    const d = distance(last, pts[i]);
+// Point-to-polyline helpers in a flat local projection (fine at campus
+// scale), used to find places beside a stretch of path and which side
+// of the walker they are on.
+const toXY = q => ({ x: q.lng * 111320 * Math.cos(toRad(q.lat)), y: q.lat * 110540 });
 
-    if (isFinal) {
-      // The true destination must survive even if it's very close to
-      // what we've kept — but appending it as a *new* point would leave
-      // a near-zero final segment whose bearing is pure noise. Replace
-      // the last kept point instead, so the destination's exact
-      // coordinates are preserved without inventing a noisy micro-leg.
-      if (d < MIN_LEG_M && out.length > 1) out[out.length - 1] = pts[i];
-      else out.push(pts[i]);
-    } else if (d >= MIN_LEG_M) {
-      out.push(pts[i]);
+function nearestOnLeg(place, legPts) {
+  const P = toXY(place);
+  let best = { d: Infinity, along: 0, side: 0 };
+  let walked = 0;
+  for (let i = 0; i < legPts.length - 1; i++) {
+    const A = toXY(legPts[i]), B = toXY(legPts[i + 1]);
+    const dx = B.x - A.x, dy = B.y - A.y;
+    const len = Math.hypot(dx, dy);
+    const t = len ? Math.max(0, Math.min(1, ((P.x - A.x) * dx + (P.y - A.y) * dy) / (len * len))) : 0;
+    const cx = A.x + t * dx, cy = A.y + t * dy;
+    const d = Math.hypot(P.x - cx, P.y - cy);
+    if (d < best.d) {
+      // Cross product: positive means the place is to the left of travel.
+      const cross = dx * (P.y - A.y) - dy * (P.x - A.x);
+      best = { d, along: walked + t * len, side: cross > 0 ? 'left' : 'right' };
     }
+    walked += len;
   }
-  return out;
+  return { ...best, total: walked };
 }
 
-export function buildSteps(coords) {
+// Direction of travel over the first (or last) ~20 m of a stretch, which
+// is steadier than the bearing of one short segment.
+function headingFrom(pts, fromEnd = false) {
+  const seq = fromEnd ? [...pts].reverse() : pts;
+  let i = 1, d = 0;
+  while (i < seq.length - 1 && d + distance(seq[i - 1], seq[i]) < 20) { d += distance(seq[i - 1], seq[i]); i++; }
+  const h = bearing(seq[0], seq[i]);
+  return fromEnd ? (h + 180) % 360 : h;
+}
+
+function classifyTurn(angle) {
+  const a = Math.abs(angle);
+  if (a < 25) return 'straight';
+  if (a < 60) return angle < 0 ? 'slight-left' : 'slight-right';
+  if (a < 140) return angle < 0 ? 'left' : 'right';
+  if (a < 165) return angle < 0 ? 'sharp-left' : 'sharp-right';
+  return 'u-turn';
+}
+
+const TURN_SPLIT_DEG = 30;  // a bend this sharp starts a new instruction
+const SAME_PATH_TURN_DEG = 65; // ...but along one path, only a real turn does
+const MIN_STEP_M = 10;      // shorter stretches are folded into the next
+const LANDMARK_M = 60;      // a place this close to a turn names the turn
+const PASS_M = 45;          // a place this close to a stretch is "passed"
+
+/**
+ * Turns a route into instructions a newcomer can follow: which way to
+ * turn, onto which path, at which landmark, what they will pass, and
+ * which side the destination is on when they get there.
+ *
+ *   coords  [[lat, lng], ...] from route.js
+ *   options.names        path name for each segment of coords (route.js)
+ *   options.places       every mapped place, for landmarks
+ *   options.originId     place the walk starts from, if any
+ *   options.destination  the place being walked to
+ */
+export function buildSteps(coords, { names = [], places = [], originId = null, destination = null } = {}) {
   if (!coords || coords.length < 2) return [];
 
-  const pts = dedupeClose(coords.map(([lat, lng]) => ({ lat, lng })));
+  // Points with the name of the segment leaving each one; near-duplicate
+  // points are dropped (their bearing is noise) without losing names.
+  const raw = coords.map(([lat, lng], i) => ({ lat, lng, nameOut: names[i] ?? null }));
+  const pts = [raw[0]];
+  for (let i = 1; i < raw.length; i++) {
+    const last = pts[pts.length - 1];
+    const isFinal = i === raw.length - 1;
+    if (distance(last, raw[i]) < MIN_LEG_M && !isFinal) {
+      last.nameOut = raw[i].nameOut ?? last.nameOut;
+      continue;
+    }
+    if (isFinal && distance(last, raw[i]) < MIN_LEG_M && pts.length > 1) pts[pts.length - 1] = raw[i];
+    else pts.push(raw[i]);
+  }
   if (pts.length < 2) return [];
-  const legs = [];
-  let legStart = 0;
-  let legBearing = bearing(pts[0], pts[1]);
 
+  // Split into stretches at real bends and where the path changes.
+  const cuts = [0];
   for (let i = 1; i < pts.length - 1; i++) {
-    const nextBearing = bearing(pts[i], pts[i + 1]);
-    const angle = turnAngle(legBearing, nextBearing);
+    const angle = turnAngle(bearing(pts[i - 1], pts[i]), bearing(pts[i], pts[i + 1]));
+    const a = pts[i - 1].nameOut, b = pts[i].nameOut;
+    const pathChange = a !== b && b !== null;
+    // Along one named path, gentle bends are just the path curving; only
+    // a real turn deserves its own instruction.
+    const limit = a !== null && a === b ? SAME_PATH_TURN_DEG : TURN_SPLIT_DEG;
+    if (Math.abs(angle) >= limit || pathChange) cuts.push(i);
+  }
+  cuts.push(pts.length - 1);
 
-    if (Math.abs(angle) >= 20) {
-      legs.push({ from: legStart, to: i, bearing: legBearing, turn: classify(angle) });
-      legStart = i;
-      legBearing = nextBearing;
+  let legs = [];
+  for (let k = 0; k < cuts.length - 1; k++) {
+    const seg = pts.slice(cuts[k], cuts[k + 1] + 1);
+    let m = 0;
+    for (let i = 1; i < seg.length; i++) m += distance(seg[i - 1], seg[i]);
+    legs.push({ pts: seg, metres: m, road: seg[0].nameOut });
+  }
+  // Fold very short stretches into the following one, so a kink in the
+  // path never becomes "turn left, 4 m, turn right".
+  for (let k = legs.length - 2; k >= 0; k--) {
+    if (legs[k].metres < MIN_STEP_M && k > 0) {
+      const prev = legs[k - 1];
+      prev.pts = [...prev.pts, ...legs[k].pts.slice(1)];
+      prev.metres += legs[k].metres;
+      legs.splice(k, 1);
     }
   }
-  legs.push({ from: legStart, to: pts.length - 1, bearing: legBearing, turn: null });
 
-  const legDist = leg => {
-    let m = 0;
-    for (let i = leg.from; i < leg.to; i++) m += distance(pts[i], pts[i + 1]);
-    return m;
+  // The last few metres usually leave the path for the building itself.
+  // That short walk-off becomes "it's on your left/right" rather than a
+  // separate turn.
+  let side = 'ahead';
+  const lastLeg = legs[legs.length - 1];
+  const endOf = l => l.pts[l.pts.length - 1];
+  if (legs.length > 1 && lastLeg.road === null && lastLeg.metres < 70) {
+    const prev = legs[legs.length - 2];
+    const ang = turnAngle(headingFrom(prev.pts, true), bearing(lastLeg.pts[0], endOf(lastLeg)));
+    side = Math.abs(ang) < 30 ? 'ahead' : ang < 0 ? 'left' : 'right';
+    prev.pts = [...prev.pts, ...lastLeg.pts.slice(1)];
+    prev.metres += lastLeg.metres;
+    legs.pop();
+  } else if (lastLeg.pts.length >= 3) {
+    const n = lastLeg.pts.length;
+    const a = lastLeg.pts[n - 2], b = lastLeg.pts[n - 1];
+    if (distance(a, b) > 8) {
+      const ang = turnAngle(headingFrom(lastLeg.pts.slice(0, -1), true), bearing(a, b));
+      side = Math.abs(ang) < 30 ? 'ahead' : ang < 0 ? 'left' : 'right';
+    }
+  }
+
+  // A short walk from the start onto the first path is part of the first
+  // step ("Walk along the lake road"), not a step of its own.
+  if (legs.length > 1 && legs[0].road === null && legs[0].metres < 65) {
+    const [stub, first] = legs;
+    first.pts = [...stub.pts, ...first.pts.slice(1)];
+    first.metres += stub.metres;
+    legs.shift();
+  }
+
+  const dest = destination;
+  const usable = places.filter(p => p.id !== originId && p.id !== dest?.id);
+  const nearestPlace = (pt, within) => {
+    let best = null, bd = within;
+    for (const p of usable) {
+      const d = distance(pt, p);
+      if (d < bd) { bd = d; best = p; }
+    }
+    return best;
   };
+  const used = new Set();
 
-  // leg[i].turn describes the maneuver at the END of leg i — i.e. the
-  // turn you make stepping INTO leg i+1. So step i+1 (not step i) is
-  // where that label belongs; getting this backwards puts "turn right"
-  // on the departure step instead of the step where you actually turn.
-  const steps = legs.map((leg, i) => ({
-    kind: i === 0 ? 'depart' : 'turn',
-    turn: i === 0 ? null : legs[i - 1].turn,
-    direction: i === 0 ? compassWord(leg.bearing) : null,
-    // The point where this leg ends is where the *next* instruction
-    // triggers — live tracking watches distance to this point.
-    at: pts[leg.to],
-    metres: legDist(leg)
-  }));
+  const steps = legs.map((leg, k) => {
+    const start = leg.pts[0];
+    const end = leg.pts[leg.pts.length - 1];
+    const step = {
+      kind: k === 0 ? 'depart' : 'turn',
+      turn: null,
+      road: leg.road,
+      start,
+      at: end,            // live tracking moves on when the walker reaches this
+      metres: leg.metres,
+      coords: leg.pts.map(p => [p.lat, p.lng]),
+      landmark: null,
+      towards: null,
+      stay: k > 0 && leg.road !== null && legs[k - 1].road === leg.road,
+      pass: null,
+      nextRoad: legs[k + 1]?.road ?? null
+    };
 
-  steps.push({ kind: 'arrive', turn: null, direction: null, at: pts[pts.length - 1], metres: 0 });
+    if (k === 0) {
+      // Point the walker at something they can see ahead, not a compass
+      // direction: the nearest place roughly in line with the first stretch.
+      const h = headingFrom(leg.pts);
+      let best = null, bd = Infinity;
+      for (const p of [...usable, ...(dest ? [dest] : [])]) {
+        const d = distance(start, p);
+        if (d < 60 || d > 350) continue; // too close to matter, or too far to see
+        const off = Math.abs(turnAngle(h, bearing(start, p)));
+        if (off < 35 && d < bd) { bd = d; best = p; }
+      }
+      step.towards = best;
+      step.direction = compassWord(h);
+    } else {
+      const angle = turnAngle(headingFrom(legs[k - 1].pts, true), headingFrom(leg.pts));
+      step.turn = classifyTurn(angle);
+      step.kind = step.turn === 'straight' ? 'continue' : 'turn';
+      const lm = nearestPlace(start, LANDMARK_M);
+      if (lm) { step.landmark = lm; used.add(lm.id); }
+    }
+
+    // Something worth noticing along the way, on one side or the other.
+    let pass = null;
+    for (const p of usable) {
+      if (used.has(p.id)) continue;
+      const n = nearestOnLeg(p, leg.pts);
+      if (n.d < PASS_M && n.along > n.total * 0.15 && n.along < n.total * 0.9 && (!pass || n.d < pass.d)) {
+        pass = { place: p, side: n.side, d: n.d };
+      }
+    }
+    if (pass) { step.pass = pass; used.add(pass.place.id); }
+    return step;
+  });
+
+  const endPt = pts[pts.length - 1];
+  steps.push({
+    kind: 'arrive', turn: null, road: null, start: endPt, at: endPt, metres: 0,
+    coords: [[endPt.lat, endPt.lng]], side, place: dest
+  });
   return steps;
 }
 

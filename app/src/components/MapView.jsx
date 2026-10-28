@@ -82,7 +82,7 @@ const LABEL_DIRS = ['bottom', 'right', 'left', 'top'];
 // Normalises both accepted path formats (bare array, or { points, steps }).
 const normalisePath = raw => (Array.isArray(raw) ? { points: raw, steps: false } : raw);
 
-export default function MapView({ center, places, selected, onSelect, position, accuracy, routeLine, lang = 'en' }) {
+export default function MapView({ center, places, selected, onSelect, position, accuracy, routeLine, stepPoints = null, stepFocus = null, lang = 'en' }) {
   const holder = useRef(null);
   const map = useRef(null);
   const base = useRef(null);
@@ -388,6 +388,58 @@ export default function MapView({ center, places, selected, onSelect, position, 
 
     m.fitBounds(routeLine, { padding: [80, 80], maxZoom: 18 });
   }, [routeLine]);
+
+  // Numbered markers where each direction step begins, matching the
+  // numbers in the step list.
+  const stepLayer = useRef(null);
+  useEffect(() => {
+    const m = map.current;
+    if (!m) return;
+    if (stepLayer.current) { m.removeLayer(stepLayer.current); stepLayer.current = null; }
+    if (!stepPoints || stepPoints.length < 3) return;
+    stepLayer.current = L.layerGroup(
+      stepPoints.slice(1, -1).map((st, i) => L.marker([st.start.lat, st.start.lng], {
+        icon: L.divIcon({
+          className: '',
+          html: `<span class="stepnum-pin">${i + 2}</span>`,
+          iconSize: [22, 22],
+          iconAnchor: [11, 11]
+        }),
+        interactive: false,
+        keyboard: false,
+        zIndexOffset: 820
+      }))
+    ).addTo(m);
+  }, [stepPoints]);
+
+  // The step being looked at: drawn brighter, and the map moves to it.
+  const focusLayer = useRef(null);
+  useEffect(() => {
+    const m = map.current;
+    if (!m) return;
+    if (focusLayer.current) { m.removeLayer(focusLayer.current); focusLayer.current = null; }
+    if (!stepFocus) return;
+    const pts = stepFocus.coords?.length > 1 ? stepFocus.coords : [[stepFocus.start.lat, stepFocus.start.lng]];
+    focusLayer.current = L.layerGroup([
+      ...(pts.length > 1 ? [
+        L.polyline(pts, { color: '#ffffff', weight: 13, opacity: .55, lineCap: 'round', lineJoin: 'round', interactive: false }),
+        L.polyline(pts, { color: '#ffc72c', weight: 7, opacity: 1, lineCap: 'round', lineJoin: 'round', interactive: false })
+      ] : []),
+      L.circleMarker(pts[0], { radius: 11, color: '#ffffff', weight: 3, fillColor: '#ffc72c', fillOpacity: 1, interactive: false })
+    ]).addTo(m);
+    const wide = window.matchMedia('(min-width: 761px)').matches;
+    if (pts.length > 1) {
+      m.flyToBounds(pts, {
+        // Keep the step clear of the place card (bottom-left on laptops,
+        // bottom on phones).
+        paddingTopLeft: wide ? [380, 70] : [40, 40],
+        paddingBottomRight: [60, wide ? 60 : 40],
+        maxZoom: 19, duration: 0.6
+      });
+    } else {
+      m.flyTo(pts[0], Math.max(m.getZoom(), 18), { duration: 0.6 });
+    }
+  }, [stepFocus]);
 
   // Track the user.
   useEffect(() => {

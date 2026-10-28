@@ -2,6 +2,9 @@ import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import MapView from './components/MapView';
 import Chat from './components/Chat';
 import Navigate from './components/Navigate';
+import StepIcon from './components/StepIcon';
+import { buildSteps } from './lib/navigate';
+import { stepText, stepHint } from './lib/dirText';
 import InstallPrompt from './components/InstallPrompt';
 import EmergencyButton from './components/EmergencyButton';
 import TripPlanner from './components/TripPlanner';
@@ -80,7 +83,12 @@ export default function App({ startChat = false, startPlace = null, onHome }) {
 
   // A live GPS fix always beats a scanned sign, but until one arrives the
   // anchor stands in for it.
-  const origin = position ?? anchor;
+  // Where directions start: a place the visitor picked, otherwise their
+  // GPS position, otherwise the place on a scanned QR sign.
+  const [fromId, setFromId] = useState(null);
+  const fromPlace = fromId ? (campus.places ?? []).find(p => p.id === fromId) ?? null : null;
+  const origin = fromPlace ?? position ?? anchor;
+  const [activeStep, setActiveStep] = useState(null);
   const [routing, setRouting] = useState(false);
   const [avoidSteps, setAvoidSteps] = useState(false);
   const [chatOpen, setChatOpen] = useState(startChat);
@@ -249,7 +257,10 @@ export default function App({ startChat = false, startPlace = null, onHome }) {
     if (!routing || !origin || !selected) return null;
     return route(graph, origin, selected, { avoidSteps });
   }, [routing, origin, selected, graph, avoidSteps]);
-  const localGood = Boolean(localWalk && localWalk.offNetwork <= 60);
+  // offNetwork adds up both ends (pin to path, path to pin). Pins sit in
+  // the middle of rooftops, so up to 60 m at each end is normal: the
+  // same per-end limit the data validator uses.
+  const localGood = Boolean(localWalk && localWalk.offNetwork <= 120);
 
   // 2) Otherwise, real OpenStreetMap footpaths. One request per destination,
   // and a new one only if the walker has moved more than 30 m since the
@@ -302,8 +313,41 @@ export default function App({ startChat = false, startPlace = null, onHome }) {
     };
   }, [routing, origin, selected, localWalk, localGood, osmWalk]);
 
+  // Directions in words: turns, paths and landmarks along the route.
+  const steps = useMemo(() => {
+    if (!walk || walk.direct) return [];
+    return buildSteps(walk.coords, {
+      names: walk.names ?? [],
+      places,
+      originId: fromPlace?.id ?? anchor?.id ?? null,
+      destination: selected
+    });
+  }, [walk, places, fromPlace, anchor, selected]);
+
   // Directions are about one destination; changing it should reset them.
-  useEffect(() => { setRouting(false); setNavOn(false); }, [selected]);
+  useEffect(() => { setRouting(false); setNavOn(false); setActiveStep(null); }, [selected]);
+  // A different start or route choice means a different list of steps.
+  useEffect(() => { setActiveStep(null); setNavOn(false); }, [fromId, avoidSteps, routing]);
+
+  // Step by step works from a frozen copy of the directions. With GPS on,
+  // the live route is recalculated from every new position fix, which
+  // would otherwise keep jumping the walker back to step 1.
+  const [guide, setGuide] = useState(null);
+  const startGuide = () => {
+    setGuide({ steps, coords: walk.coords });
+    setActiveStep(0);
+    setNavOn(true);
+  };
+  const shownSteps = navOn && guide ? guide.steps : steps;
+
+  const fromValue = fromId ?? (position || locating ? '__me' : anchor ? anchor.id : '');
+  const chooseFrom = v => {
+    setFromId(v === '__me' || v === '' ? null : v);
+    // "My location" turns GPS on from right here, so nobody has to close
+    // the card to find the location button.
+    if (v === '__me' && !position) setLocating(true);
+    if (v) setRouting(true);
+  };
 
   return (
     <main className="shell">
@@ -337,6 +381,8 @@ export default function App({ startChat = false, startPlace = null, onHome }) {
         position={position}
         accuracy={accuracy}
         routeLine={tripRoute ?? walk?.coords}
+        stepPoints={!tripRoute && shownSteps.length ? shownSteps : null}
+        stepFocus={!tripRoute && activeStep !== null ? shownSteps[activeStep] ?? null : null}
         lang={lang}
       />
 
@@ -520,11 +566,15 @@ export default function App({ startChat = false, startPlace = null, onHome }) {
         </div>
       </aside>
 
-      {navOn && walk && (
+      {navOn && guide && (
         <Navigate
-          place={selected}
-          coords={walk.coords}
+          steps={guide.steps}
+          index={activeStep ?? 0}
+          onIndex={setActiveStep}
           position={position}
+          live={Boolean(position && !fromPlace)}
+          coords={guide.coords}
+          place={selected}
           lang={lang}
           onClose={() => setNavOn(false)}
         />
@@ -588,6 +638,17 @@ export default function App({ startChat = false, startPlace = null, onHome }) {
           {selected.aliases?.length > 0 && (
             <p className="aliases">{t('alsoCalled', lang)} {selected.aliases.join(', ')}</p>
           )}
+          <div className="fromrow">
+            <label htmlFor="fromsel">{t('startFrom', lang)}</label>
+            <select id="fromsel" value={fromValue} onChange={e => chooseFrom(e.target.value)}>
+              {!position && !anchor && !locating && <option value="">{t('chooseStart', lang)}</option>}
+              <option value="__me">{t('myLocation', lang)}</option>
+              {places.filter(p => p.id !== selected.id).map(p => (
+                <option key={p.id} value={p.id}>{placeName(p, lang)}</option>
+              ))}
+            </select>
+          </div>
+
           {origin ? (
             <button
               className={routing ? 'ghost route' : 'primary route'}
@@ -596,10 +657,10 @@ export default function App({ startChat = false, startPlace = null, onHome }) {
               {routing ? t('hideRoute', lang) : t('walkThere', lang)}
             </button>
           ) : (
-            <p className="hintline">{t('needLocation', lang)}</p>
+            <p className="hintline">{t('needStart', lang)}</p>
           )}
 
-          {origin && (
+          {routing && (
             <label className="stepfree">
               <input
                 type="checkbox"
@@ -614,21 +675,45 @@ export default function App({ startChat = false, startPlace = null, onHome }) {
             <p className="warn">{t('noStepFree', lang)}</p>
           )}
 
-          {walk && !walk.direct && position && !navOn && (
-            <button className="primary route" onClick={() => setNavOn(true)}>
-              {t('startNav', lang)}
-            </button>
-          )}
-
           {walk && (
             <p className="routeinfo">
               {formatDistance(walk.metres)} · {walkTime(walk.metres, lang)}
               {walk.direct && ` · ${t('straightLine', lang)}`}
               {walk.source === 'osm' && ' · via OpenStreetMap footpaths'}
-              {!walk.direct && walk.source !== 'osm' && walk.offNetwork > 60 &&
+              {!walk.direct && walk.source !== 'osm' && walk.offNetwork > 120 &&
                 ` · roughly ${walk.offNetwork} m of this is off the traced paths`}
               {osmLoading && !localGood && ' · finding footpath route…'}
             </p>
+          )}
+
+          {routing && steps.length > 1 && (
+            <div className="dirs">
+              <button className="primary route" onClick={startGuide}>
+                {t('stepByStep', lang)}
+              </button>
+              <p className="dirshint">{t('tapStep', lang)}</p>
+              <ol className="steplist">
+                {steps.map((st, i) => {
+                  const hint = stepHint(st, lang);
+                  return (
+                    <li key={i}>
+                      <button
+                        className={activeStep === i ? 'stepitem on' : 'stepitem'}
+                        onClick={() => setActiveStep(activeStep === i ? null : i)}
+                        aria-pressed={activeStep === i}
+                      >
+                        <StepIcon step={st} />
+                        <span className="steptext">
+                          <strong>{stepText(st, lang)}</strong>
+                          {hint && <em>{hint}</em>}
+                        </span>
+                        {st.kind !== 'arrive' && <span className="stepdist">{formatDistance(st.metres)}</span>}
+                      </button>
+                    </li>
+                  );
+                })}
+              </ol>
+            </div>
           )}
 
           {selected.confidence !== 'confirmed' && (

@@ -27,10 +27,11 @@ Campus wayfinding web app for Dayananda Sagar University (Harohalli, Bengaluru, 
 ## Current data state (`npm run validate`)
 
 - 10 places (target 15 to 20). 2 are guesses: `ai-building`, `hostel-girls-2sharing`. `hostel-mess` is marked confirmed but its coordinates are rounded (12.6576, 77.4462), so re-check it in the field.
-- 6 footpaths, 12 points, one connected network. 36 of 45 trips routable (80%).
+- 24 named footpaths, 102 points, one connected network, traced on 29 October 2026 from satellite imagery along the visible roads (not yet walked). All 36 on-campus trips route; the 9 that don't all involve the off-campus bus stand.
 - 0 building outlines.
-- Warnings: paths #2 and #6 have 198 to 273 m straight stretches; `harohalli-bus-stand` is 2.6 km from any path (it is off campus, so that is expected).
-- **The path network is a sketch, not a trace.** All 6 paths start at the main gate or at Boys Hostel 1, like spokes, and most middle points are rounded estimates. Every trip therefore routes through the main gate. Routing snaps to the nearest path point, not the nearest line, so sparse points make routes worse. Re-trace all paths along visible roads and add cross-links between buildings.
+- Only warning: `harohalli-bus-stand` is 2.6 km from any path (it is off campus, so that is expected).
+- Each path has a `name` ("the road along the lake"). Directions use these names, so a newly traced path should get one: edit `paths.json` after exporting from `tools/pathmaker.html`, which keeps existing names but does not ask for new ones.
+- The "likely real gate" at the gatehouse by the highway (where `front-drive`, `avenue` and `gate-to-plaza` meet) is a guess from imagery; confirm on campus.
 
 ## AI assistant (Worker)
 
@@ -70,6 +71,7 @@ The token lasts only for that Terminal window.
 5. Building outline tool (`tools/buildmaker.html`) and outline drawing in the map at zoom 16+ (`buildings.json` still empty).
 6. Data validator (`npm run validate` in `app/`).
 7. Worker hardened and deployed (see above).
+10. Step-by-step directions (29 October 2026): `lib/navigate.js` `buildSteps` turns a route into steps with the path name, turn, a landmark at the turn, places passed on either side, and which side the destination is on. Words for every language are in `lib/dirText.js` (English uses path names; other languages use turns and landmarks; translations need a native check). The place card has a "Start from" picker (any place or My location), a numbered step list (tap to zoom the map to that step), and a Step by step card with Back/Next that also moves on by itself with GPS. Routing (`lib/route.js`) now chooses the best of several nearby join points instead of the single nearest one.
 8. Visual redesign (28 October 2026): a direction-board look shared by the landing page and the map app. Tokens in `app/src/index.css` (`:root`): signboard blue `--board`, signal yellow `--live`, night navy `--ink`; Barlow and Barlow Condensed, self-hosted through `@fontsource`. The landing hero is a live, non-interactive satellite map with the real pins; a "Where things are" board lists places with direction arrows and walking distances, and each row opens `#/map/<place-id>`. The Help and trip buttons now sit on the map, not over the panel.
 9. 3D landing page (28 October 2026): the hero is a scroll-driven 3D flight over the campus (`app/src/lib/campus3d.js`, three.js, loaded only on the landing page). Satellite tiles are stitched into ground textures (zoom 17 over campus, zoom 14 around it), each place gets a rising beam and label, and arcs run from DSU Main Campus to every place. Scroll effects use GSAP ScrollTrigger in `Home.jsx` (`useScrollEffects`): word-by-word headings, split-flap distances, greeting marquee, counters, 3D feature cards, pipeline progress line, reading bar. Reduced motion gives one still 3D view; no WebGL falls back to a flat Leaflet map. The camera path is the `WIDE_SHOTS` / `TALL_SHOTS` lists in `campus3d.js`.
 
@@ -81,7 +83,7 @@ The token lasts only for that Terminal window.
 ## Next steps
 
 1. Add Anthropic credits, then confirm the assistant answers on the live site.
-2. Desk session A: re-trace all footpaths in `tools/pathmaker.html` along visible roads, with cross-links between buildings, then `npm run validate`.
+2. Walk 3 or more routes on campus with Step by step open and fix any path that doesn't match the ground.
 3. Desk session B: trace about 10 building outlines in `tools/buildmaker.html`.
 4. Field session: confirm `ai-building`, `hostel-girls-2sharing` and `hostel-mess`; add library, admin/fees, canteen, medical and parking. Then validate and redeploy the Worker.
 

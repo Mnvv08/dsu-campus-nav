@@ -8,7 +8,7 @@ const key = (lat, lng) => `${lat.toFixed(6)},${lng.toFixed(6)}`;
 // Paths are either a bare array of points (the original format) or an
 // object carrying attributes. Accepting both means old exports keep
 // working rather than silently producing an empty network.
-const normalise = p => (Array.isArray(p) ? { points: p, steps: false } : p);
+const normalise = p => (Array.isArray(p) ? { points: p, steps: false, name: null } : p);
 
 export function buildGraph(paths) {
   const nodes = new Map(); // key -> { lat, lng, edges: [{ to, cost, steps }] }
@@ -20,14 +20,16 @@ export function buildGraph(paths) {
   };
 
   for (const raw of paths) {
-    const { points, steps = false } = normalise(raw);
+    // `name` is how directions refer to this path ("the road along the
+    // lake"); paths without one still route, they just aren't named.
+    const { points, steps = false, name = null } = normalise(raw);
     for (let i = 1; i < points.length; i++) {
       const a = add(points[i - 1]);
       const b = add(points[i]);
       if (a === b) continue;
       const cost = distance(nodes.get(a), nodes.get(b));
-      nodes.get(a).edges.push({ to: b, cost, steps });
-      nodes.get(b).edges.push({ to: a, cost, steps });
+      nodes.get(a).edges.push({ to: b, cost, steps, name });
+      nodes.get(b).edges.push({ to: a, cost, steps, name });
     }
   }
 
@@ -44,41 +46,34 @@ function nearestNode(graph, point) {
   return best === null ? null : { key: best, away: bestD };
 }
 
-// Dijkstra with a linear scan for the next node. The campus network is
-// a few hundred nodes at most, so a binary heap would be more code for
-// no measurable gain.
-function shortestPath(graph, from, to, avoidSteps = false) {
-  const dist = new Map([[from, 0]]);
+// Dijkstra from several start nodes at once, each seeded with the
+// distance from the walker to it, run until every node is settled. The
+// graph is a few hundred nodes, so a full run costs nothing noticeable.
+function settleAll(graph, seeds, avoidSteps) {
+  const dist = new Map(seeds.map(s => [s.key, s.cost]));
   const prev = new Map();
   const done = new Set();
-
   while (true) {
-    let cur = null;
-    let curD = Infinity;
-    for (const [k, d] of dist) {
-      if (!done.has(k) && d < curD) { cur = k; curD = d; }
-    }
-    if (cur === null) return null;
-    if (cur === to) break;
+    let cur = null, curD = Infinity;
+    for (const [k, d] of dist) if (!done.has(k) && d < curD) { cur = k; curD = d; }
+    if (cur === null) break;
     done.add(cur);
-
     for (const e of graph.get(cur).edges) {
-      if (done.has(e.to)) continue;
-      // Excluded outright rather than penalised. A weighted detour would
-      // still route someone up a staircase if the alternative were long
-      // enough, which defeats the point.
-      if (avoidSteps && e.steps) continue;
+      if (done.has(e.to) || (avoidSteps && e.steps)) continue;
       const alt = curD + e.cost;
-      if (alt < (dist.get(e.to) ?? Infinity)) {
-        dist.set(e.to, alt);
-        prev.set(e.to, cur);
-      }
+      if (alt < (dist.get(e.to) ?? Infinity)) { dist.set(e.to, alt); prev.set(e.to, cur); }
     }
   }
+  return { dist, prev };
+}
 
-  const chain = [to];
-  while (prev.has(chain[0])) chain.unshift(prev.get(chain[0]));
-  return { chain, metres: dist.get(to) };
+// Nodes worth joining the network at: the nearest, plus any not much
+// further away. Picking the best of these avoids routes that first walk
+// to the nearest point and then double back past where they started.
+function joinCandidates(graph, point) {
+  const all = [...graph].map(([key, n]) => ({ key, away: distance(point, n) }));
+  const nearest = Math.min(...all.map(c => c.away));
+  return all.filter(c => c.away <= nearest + 35);
 }
 
 /**
@@ -99,13 +94,30 @@ export function route(graph, from, to, { avoidSteps = false } = {}) {
   // here to say anything useful.
   if (a.key === b.key) return null;
 
-  let found = shortestPath(graph, a.key, b.key, avoidSteps);
+  const starts = joinCandidates(graph, from);
+  const ends = joinCandidates(graph, to);
+  const solve = steps => {
+    const { dist, prev } = settleAll(graph, starts.map(c => ({ key: c.key, cost: c.away })), steps);
+    let best = null;
+    for (const c of ends) {
+      const d = dist.get(c.key);
+      if (d !== undefined && (!best || d + c.away < best.total)) best = { ...c, total: d + c.away };
+    }
+    if (!best) return null;
+    const chain = [best.key];
+    while (prev.has(chain[0])) chain.unshift(prev.get(chain[0]));
+    const head = starts.find(c => c.key === chain[0]);
+    if (chain.length < 2) return null;
+    return { chain, metres: best.total - best.away - head.away, headAway: head.away, tailAway: best.away };
+  };
+
+  let found = solve(avoidSteps);
   let noStepFreeRoute = false;
 
   // Falling back to a route with steps is more useful than a dead end,
   // but only if the app says clearly which one it gave.
   if (!found && avoidSteps) {
-    found = shortestPath(graph, a.key, b.key, false);
+    found = solve(false);
     noStepFreeRoute = true;
   }
   if (!found) return null;
@@ -115,10 +127,20 @@ export function route(graph, from, to, { avoidSteps = false } = {}) {
     return [n.lat, n.lng];
   });
 
+  // The path name for every segment of `coords`, in order. The first and
+  // last segments are the walk on and off the network, so they have none.
+  const segNames = [null];
+  for (let i = 1; i < found.chain.length; i++) {
+    const edge = graph.get(found.chain[i - 1]).edges.find(e => e.to === found.chain[i]);
+    segNames.push(edge?.name ?? null);
+  }
+  segNames.push(null);
+
   return {
     coords: [[from.lat, from.lng], ...coords, [to.lat, to.lng]],
-    metres: found.metres + a.away + b.away,
-    offNetwork: Math.round(a.away + b.away),
+    names: segNames,
+    metres: found.metres + found.headAway + found.tailAway,
+    offNetwork: Math.round(found.headAway + found.tailAway),
     noStepFreeRoute
   };
 }

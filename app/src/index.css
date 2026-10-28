@@ -141,6 +141,7 @@ button { font: inherit; cursor: pointer; }
 /* Detail sheet */
 .sheet {
   position: absolute; z-index: 650;
+  max-height: calc(100% - 44px); overflow-y: auto; overscroll-behavior: contain;
   left: 22px; bottom: 22px;
   width: 330px;
   padding: 20px 22px;
@@ -851,3 +852,96 @@ button:focus-visible, .row:focus-visible { outline: 2px solid var(--live); outli
 }
 .map-light .leaflet-control-attribution a { color: #1a5fb4 !important; }
 .maplibregl-canvas { outline: none; }
+
+
+/* ---------- Directions ---------- */
+
+/* Where the walk starts from. */
+.fromrow { display: flex; align-items: center; gap: 10px; margin-top: 16px; }
+.fromrow label { flex: none; color: var(--muted); font-size: 13px; }
+.fromrow select {
+  flex: 1; min-width: 0;
+  padding: 9px 10px; border-radius: 8px;
+  background: var(--field); color: var(--text);
+  border: 1px solid var(--line); font: inherit; font-size: 14px;
+}
+.fromrow select:focus { outline: 2px solid var(--live); outline-offset: -1px; border-color: transparent; }
+
+.dirs { margin-top: 6px; }
+.dirshint { margin: 10px 0 6px; color: var(--muted); font-size: 12px; }
+.steplist { list-style: none; margin: 0; padding: 0; counter-reset: step; }
+.steplist li { counter-increment: step; }
+.stepitem {
+  width: 100%;
+  display: grid; grid-template-columns: 34px minmax(0, 1fr) auto; gap: 10px; align-items: start;
+  padding: 10px 8px; margin: 0;
+  background: none; border: 0; border-radius: 8px;
+  color: var(--text); text-align: left; font: inherit;
+  position: relative;
+}
+.stepitem:hover { background: var(--field); }
+.stepitem.on { background: var(--field); box-shadow: inset 3px 0 0 var(--live); }
+/* The step number sits on the icon, matching the numbers on the map. */
+.stepitem::after {
+  content: counter(step);
+  position: absolute; left: 30px; top: 6px;
+  min-width: 16px; height: 16px; padding: 0 3px; border-radius: 8px;
+  background: var(--ink); color: var(--muted);
+  font: 600 10px/16px var(--font-body); text-align: center;
+}
+.steptext strong { display: block; font-size: 14px; font-weight: 600; line-height: 1.35; }
+.steptext em { display: block; font-style: normal; color: var(--muted); font-size: 12.5px; margin-top: 3px; line-height: 1.4; }
+.stepdist { color: var(--live); font-size: 13px; font-weight: 600; white-space: nowrap; padding-top: 1px; }
+
+.stepicon {
+  display: inline-flex; align-items: center; justify-content: center;
+  border-radius: 50%; background: var(--board); flex: none;
+  box-shadow: inset 0 0 0 1.5px rgba(255,255,255,.85);
+}
+.stepicon svg { fill: #fff; }
+.stepicon-md { width: 30px; height: 30px; }
+.stepicon-md svg { width: 17px; height: 17px; }
+.stepicon-lg { width: 56px; height: 56px; border-radius: 14px; background: var(--live); box-shadow: none; }
+.stepicon-lg svg { width: 32px; height: 32px; fill: var(--on-live); }
+.stepicon-start svg { fill: var(--live); }
+.stepicon-lg.stepicon-start svg { fill: var(--on-live); }
+.stepicon-end { background: #1f9d55; }
+
+/* Step numbers on the map. */
+.stepnum-pin {
+  display: flex; align-items: center; justify-content: center;
+  width: 22px; height: 22px; border-radius: 50%;
+  background: var(--board); color: #fff;
+  font: 700 12px/1 var(--font-body);
+  border: 2px solid #fff; box-shadow: 0 1px 5px rgba(0,0,0,.6);
+}
+
+/* Step-by-step card: on the map, never over the side panel. */
+.guide {
+  position: absolute; z-index: 700;
+  left: 12px; right: calc(380px + 12px); top: 12px;
+  max-width: 560px; margin: 0 auto;
+  background: rgba(10, 27, 51, .97);
+  border: 1px solid var(--line); border-radius: 14px;
+  padding: 12px 14px 12px;
+  box-shadow: 0 16px 40px rgba(0,0,0,.55);
+}
+.guidetop { display: flex; align-items: center; gap: 8px; }
+.guidecount { flex: 1; color: var(--muted); font-size: 13px; font-weight: 600; }
+.guidemain { display: flex; gap: 14px; align-items: flex-start; margin-top: 8px; }
+.guidetext { display: flex; flex-direction: column; min-width: 0; }
+.guidetext strong { font: 700 22px/1.2 var(--font-sign); }
+.guidetext em { font-style: normal; color: var(--muted); font-size: 14px; margin-top: 4px; }
+.guidedist { color: var(--live); font: 700 20px/1.1 var(--font-sign); margin-top: 6px; }
+.guidenav { display: flex; gap: 10px; margin-top: 14px; }
+.guidenav button { flex: 1; padding: 12px; border-radius: 9px; font: 600 18px/1 var(--font-sign); }
+.guidenav button:disabled { opacity: .4; cursor: default; }
+.guide .navremain { margin: 10px 0 0; }
+
+@media (max-width: 760px) {
+  .guide { left: 8px; right: 8px; top: 8px; }
+  .guidetext strong { font-size: 20px; }
+  /* Phone: the place card fills the lower half, over the list, so the
+     map above stays fully visible while reading directions. */
+  .sheet { top: calc(45vh + 6px); bottom: 6px; max-height: none; border-radius: 14px 14px 10px 10px; }
+}

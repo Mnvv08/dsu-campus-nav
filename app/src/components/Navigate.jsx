@@ -1,16 +1,13 @@
-import { useState, useEffect, useRef, useMemo } from 'react';
-import { buildSteps, trackProgress, remainingDistance } from '../lib/navigate';
+import { useState, useEffect, useRef } from 'react';
+import { trackProgress, remainingDistance } from '../lib/navigate';
+import { stepText, stepHint } from '../lib/dirText';
 import { distance, formatDistance, walkTime } from '../lib/categories';
 import { t, placeName, VOICE_LOCALE } from '../lib/i18n';
+import StepIcon from './StepIcon';
 
-const ARROWS = {
-  left: '↰', right: '↱', 'sharp-left': '↺', 'sharp-right': '↻', 'u-turn': '⟲', straight: '↑'
-};
-
-// Speech synthesis voices vary a lot by device; en-IN/kn-IN/hi-IN are
-// requested but the browser silently falls back to whatever it has if a
-// locale isn't installed, so this stays best-effort rather than a
-// feature the app depends on.
+// Speech synthesis voices vary a lot by device; the locale is requested
+// but the browser falls back to whatever it has, so voice stays a
+// best-effort extra rather than something the app depends on.
 function say(text, lang) {
   if (!('speechSynthesis' in window) || !text) return;
   const u = new SpeechSynthesisUtterance(text);
@@ -20,85 +17,85 @@ function say(text, lang) {
   window.speechSynthesis.speak(u);
 }
 
-function instructionText(step, lang) {
-  if (step.kind === 'depart') {
-    const dir = t('navDir', lang)[step.direction] ?? step.direction;
-    return typeof t('navDepart', lang) === 'function' ? t('navDepart', lang)(dir) : `Head ${dir}`;
-  }
-  if (step.kind === 'arrive') return t('navArrived', lang);
-  return t('navTurn', lang)[step.turn] ?? t('navTurn', lang).left;
-}
-
-export default function Navigate({ place, coords, position, lang, onClose }) {
-  const steps = useMemo(() => buildSteps(coords), [coords]);
-  const [index, setIndex] = useState(0);
+/**
+ * Step-by-step directions, one instruction at a time. Back and Next work
+ * with no GPS at all, so someone can read the route before setting off or
+ * follow it with patchy signal. When `live` is on (the walk starts from
+ * the walker's own location), the step also moves on by itself as they
+ * reach each turn.
+ */
+export default function Navigate({ steps, index, onIndex, position, live, coords, lang, place, onClose }) {
   const [offRoute, setOffRoute] = useState(false);
   const [voiceOn, setVoiceOn] = useState(false);
   const lastSpoken = useRef(-1);
 
-  // Voice is opt-in per session and stops cleanly if navigation ends.
   useEffect(() => () => window.speechSynthesis?.cancel(), []);
 
   useEffect(() => {
-    if (!position || !steps.length) return;
+    if (!live || !position || !steps.length) return;
     const p = trackProgress(position, steps, index, coords);
     setOffRoute(p.offRoute);
-    if (p.index !== index) setIndex(p.index);
-  }, [position, steps, coords, index]);
+    if (p.index !== index) onIndex(p.index);
+  }, [live, position, steps, coords, index, onIndex]);
 
   useEffect(() => {
-    if (!voiceOn || index === lastSpoken.current) return;
+    if (!voiceOn || index === lastSpoken.current || !steps[index]) return;
     lastSpoken.current = index;
-    say(instructionText(steps[index], lang), lang);
+    const hint = stepHint(steps[index], lang);
+    say(hint ? `${stepText(steps[index], lang)}. ${hint}` : stepText(steps[index], lang), lang);
   }, [index, voiceOn, lang, steps]);
 
   if (!steps.length) return null;
 
   const step = steps[index];
-  const toNext = position ? distance(position, step.at) : step.metres;
+  const last = index === steps.length - 1;
+  const toNext = live && position ? distance(position, step.at) : step.metres;
   const remaining = remainingDistance(steps, index, toNext);
-  const next = steps[index + 1];
-  const arrived = step.kind === 'arrive' && toNext < 12;
+  const hint = stepHint(step, lang);
 
   return (
-    <div className="navbar">
-      <div className="navmain">
-        <span className="navarrow">
-          {step.kind === 'arrive' ? '🏁' : ARROWS[step.turn ?? 'straight']}
-        </span>
-        <div className="navtext">
-          <strong>{instructionText(step, lang)}</strong>
-          {step.kind !== 'arrive' && <span>{formatDistance(toNext)}</span>}
-          {step.kind !== 'arrive' && next && next.kind !== 'arrive' && (
-            <em>
-              {t('navThenContinue', lang)} {formatDistance(next.metres)},{' '}
-              {instructionText(next, lang).toLowerCase()}
-            </em>
-          )}
-        </div>
+    <section className="guide" aria-label={t('stepByStep', lang)} aria-live="polite">
+      <div className="guidetop">
+        <span className="guidecount">{t('stepOf', lang)(index + 1, steps.length)}</span>
         <button
           className={voiceOn ? 'navvoice on' : 'navvoice'}
           onClick={() => setVoiceOn(v => !v)}
-          aria-label="Toggle spoken directions"
+          aria-label="Read directions aloud"
           aria-pressed={voiceOn}
         >
           {voiceOn ? '🔊' : '🔇'}
         </button>
-        <button className="navclose" onClick={onClose} aria-label="Stop navigation">&times;</button>
+        <button className="navclose" onClick={onClose} aria-label="Close step by step">&times;</button>
       </div>
 
-      {offRoute && !arrived && <p className="navwarn">{t('navOffRoute', lang)}</p>}
+      <div className="guidemain">
+        <StepIcon step={step} size="lg" />
+        <div className="guidetext">
+          <strong>{stepText(step, lang)}</strong>
+          {hint && <em>{hint}</em>}
+          {!last && <span className="guidedist">{formatDistance(toNext)}</span>}
+        </div>
+      </div>
 
-      {!arrived && (
+      {offRoute && <p className="navwarn">{t('navOffRoute', lang)}</p>}
+
+      <div className="guidenav">
+        <button className="ghost" onClick={() => onIndex(index - 1)} disabled={index === 0}>
+          ‹ {t('stepBack', lang)}
+        </button>
+        {last ? (
+          <button className="primary" onClick={onClose}>{t('stopNav', lang)}</button>
+        ) : (
+          <button className="primary" onClick={() => onIndex(index + 1)}>{t('stepNext', lang)} ›</button>
+        )}
+      </div>
+
+      {!last && (
         <p className="navremain">
           {formatDistance(remaining)} {t('navRemaining', lang)} · {walkTime(remaining, lang)}
           {place && <> · {placeName(place, lang)}</>}
         </p>
       )}
-
-      {arrived && (
-        <button className="navdone" onClick={onClose}>{t('stopNav', lang)}</button>
-      )}
-    </div>
+    </section>
   );
 }
