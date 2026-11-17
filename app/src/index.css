@@ -296,6 +296,7 @@ button:focus-visible, .row:focus-visible { outline: 2px solid var(--live); outli
 
 .chat {
   position: absolute;
+  z-index: 1100; /* above the Leaflet panes and controls (up to 1000) */
   right: 402px; bottom: 22px;
   width: 360px; max-height: 74vh;
   display: flex; flex-direction: column;
